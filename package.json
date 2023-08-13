@@ -1,0 +1,42 @@
+{
+  "name": "user_management",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tsx -r dotenv/config src/index.ts",
+    "pm2": "pm2 start --interpreter ./node_modules/.bin/tsx --name='user-management-2' src/index.ts",
+    "dev": "tsx watch -r dotenv/config src/index.ts",
+    "migrate": "drizzle-kit generate:pg --config=drizzle.config.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/morgan": "^1.9.4",
+    "@types/node": "^20.3.3",
+    "@types/nodemailer": "^6.4.8",
+    "@types/pg": "^8.10.2",
+    "drizzle-kit": "^0.18.1",
+    "tsx": "^3.12.7"
+  },
+  "dependencies": {
+    "@types/jsonwebtoken": "^9.0.2",
+    "argon2": "^0.30.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "drizzle-orm": "^0.26.5",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.1",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.3",
+    "pg": "^8.11.1",
+    "winston": "^3.9.0"
+  }
+}
