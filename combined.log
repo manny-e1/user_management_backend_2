@@ -10140,3 +10140,59 @@
 {"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-13T15:36:51.130Z"}
 {"level":"info","message":"production","timestamp":"2023-08-13T15:41:55.640Z"}
 {"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-13T15:42:07.231Z"}
+{"level":"info","message":"development","timestamp":"2023-08-13T16:12:32.738Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-13T16:12:33.113Z"}
+{"level":"info","message":"reset password set to user with email aewnetu6@gmail.com","timestamp":"2023-08-13T16:34:37.022Z"}
+{"level":"info","message":"reset password set to user with email aewnetu1@gmail.com","timestamp":"2023-08-13T16:35:22.005Z"}
+{"level":"info","message":"development","timestamp":"2023-08-13T16:44:37.029Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-13T16:44:37.181Z"}
+{"level":"info","message":"reset password set to user with email dagim@gmail.com","timestamp":"2023-08-14T07:52:29.127Z"}
+{"level":"info","message":"reset password set to user with email ale@gmail.com","timestamp":"2023-08-14T08:11:54.121Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:31:33.565Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:31:33.743Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:32:07.964Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:32:08.101Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:32:10.495Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:32:10.623Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:34:32.810Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:34:32.956Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:35:36.920Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:35:37.063Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:36:19.602Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:36:19.743Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:36:58.435Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:36:58.581Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:37:28.192Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:37:28.342Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T08:43:56.946Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T08:43:57.082Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T12:21:54.614Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T12:21:54.895Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T12:24:06.460Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T12:24:06.590Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T12:27:23.969Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T12:27:24.097Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T12:27:45.718Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T12:27:45.829Z"}
+{"level":"info","message":"Forgot password request ...","timestamp":"2023-08-14T12:45:58.412Z"}
+{"level":"info","message":"transport email ...","timestamp":"2023-08-14T12:45:58.447Z"}
+{"level":"info","message":"reset password set to user with email dagim@gmail.com","timestamp":"2023-08-14T12:46:07.351Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T13:03:58.738Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T13:03:58.876Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T13:04:02.163Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T13:04:02.275Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T13:04:36.589Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T13:04:36.794Z"}
+{"code":"23503","constraint":"users_user_group_id_user_groups_id_fk","detail":"Key (id)=(fc39fe67-8d24-4df1-8782-5282f2110f94) is still referenced from table \"users\".","file":"ri_triggers.c","length":340,"level":"error","line":"2621","name":"error","routine":"ri_ReportViolation","schema":"public","severity":"ERROR","table":"users","timestamp":"2023-08-14T13:05:03.594Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T13:06:23.260Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T13:06:23.398Z"}
+{"code":"23503","constraint":"users_user_group_id_user_groups_id_fk","detail":"Key (id)=(fc39fe67-8d24-4df1-8782-5282f2110f94) is still referenced from table \"users\".","file":"ri_triggers.c","length":340,"level":"error","line":"2621","name":"error","routine":"ri_ReportViolation","schema":"public","severity":"ERROR","table":"users","timestamp":"2023-08-14T13:06:30.310Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T13:29:55.725Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T13:29:55.872Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T13:30:09.355Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T13:30:09.496Z"}
+{"level":"info","message":"reset password set to user with email hanna@gmail.com","timestamp":"2023-08-14T13:32:37.247Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T15:59:26.217Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T15:59:26.361Z"}
+{"level":"info","message":"development","timestamp":"2023-08-14T16:04:25.488Z"}
+{"address":"0.0.0.0","family":"IPv4","level":"info","message":"Listening on:","port":5001,"timestamp":"2023-08-14T16:04:25.637Z"}

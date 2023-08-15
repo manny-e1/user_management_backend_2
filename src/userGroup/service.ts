@@ -108,7 +108,7 @@ export async function deleteUserGroup(id: string) {
       return { error: 'invalid id' };
     } else if (err.message.includes('violates foreign key constraint')) {
       return {
-        error: "can't delete user-group because it is associated with a user",
+        error: 'User group is used',
       };
     }
     return { error: err.message };

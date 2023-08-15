@@ -73,7 +73,7 @@ export const users = pgTable(
     staffId: varchar('staff_id', { length: 256 }).notNull(),
     status: statusEnum('status').default('locked').notNull(),
     userGroup: uuid('user_group_id')
-      .references(() => userGroups.id, { onDelete: 'cascade' })
+      .references(() => userGroups.id)
       .notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -138,7 +138,7 @@ export type NewTransactionLog = Omit<
 
 // System Maintenance
 export const maintenanceLogs = pgTable('maintenance_logs', {
-  id: uuid("id").defaultRandom().notNull().primaryKey(),
+  id: uuid('id').defaultRandom().notNull().primaryKey(),
   createdAt: timestamp('createdAt').notNull(),
   submittedAt: timestamp('submittedAt').defaultNow(),
   submittedBy: varchar('submittedBy').default('').notNull(),
@@ -154,28 +154,37 @@ export const maintenanceLogs = pgTable('maintenance_logs', {
   isCompleted: boolean('isCompleted').default(false).notNull(),
   rejectReason: varchar('rejectReason').default('').notNull(),
   isDeleted: boolean('isDeleted').default(false).notNull(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export type NewMaintenanceLog = Omit<
   InferModel<typeof maintenanceLogs>,
-  'id' | 'submissionStatus' | 'approvalStatus' | 'approvedBy' | 'isCompleted' | 'rejectReason' | 'iRakyatStatus' | 'iBizRakyatStatus' | 'isDeleted' | 'updatedAt' | 'createdAt'
->
+  | 'id'
+  | 'submissionStatus'
+  | 'approvalStatus'
+  | 'approvedBy'
+  | 'isCompleted'
+  | 'rejectReason'
+  | 'iRakyatStatus'
+  | 'iBizRakyatStatus'
+  | 'isDeleted'
+  | 'updatedAt'
+  | 'createdAt'
+>;
 
 // Rejection Logs
 export const rejectionLogs = pgTable('rejection_logs', {
-  id: uuid("id").defaultRandom().notNull().primaryKey(),
-  mid: uuid('mid').references(() => maintenanceLogs.id, {onDelete: 'cascade'}).notNull(),
+  id: uuid('id').defaultRandom().notNull().primaryKey(),
+  mid: uuid('mid')
+    .references(() => maintenanceLogs.id, { onDelete: 'cascade' })
+    .notNull(),
   rejectedDate: timestamp('rejectedDate').notNull(),
   submissionStatus: varchar('submissionStatus').notNull(),
   rejectedBy: varchar('rejectedBy').notNull(),
-  reason: varchar('reason').notNull()
+  reason: varchar('reason').notNull(),
 });
 
-export type NewRejectionLog = Omit<
-  InferModel<typeof rejectionLogs>,
-  'id'
->
+export type NewRejectionLog = Omit<InferModel<typeof rejectionLogs>, 'id'>;
 
 //Wrong_password_trail
 export const wrongPasswordTrial = pgTable('wrong_password_trials', {
