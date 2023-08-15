@@ -23,8 +23,6 @@ export async function httpCheckPasswordValidity(
   }
   const updatedAt = result.updatedAt!;
   const isMoreThan60Days = isMoreThan60DaysAfter(updatedAt);
-  console.log({ updatedAt });
-  console.log(isMoreThan60Days);
 
   if (isMoreThan60Days) {
     throw createHttpError.Forbidden(

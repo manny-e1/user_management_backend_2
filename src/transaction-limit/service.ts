@@ -12,8 +12,6 @@ export type ChangeStatus = {
 };
 
 export async function createTxnLog(body: NewTransactionLog) {
-  console.log({ body });
-
   try {
     await db.insert(transactionLogs).values(body);
     return { message: 'success' };
@@ -90,8 +88,6 @@ export async function getLastUpdatedValue() {
 }
 
 export async function changeStatus(body: ChangeStatus) {
-  console.log({ body });
-
   try {
     const updatedData = await db
       .update(transactionLogs)

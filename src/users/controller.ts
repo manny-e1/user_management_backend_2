@@ -271,7 +271,7 @@ export async function httpForgotPassword(
 ) {
   const { email } = req.body;
 
-  logger.info("Forgot password request ...");
+  logger.info('Forgot password request ...');
 
   if (!email) {
     throw createHttpError.BadRequest(
@@ -289,7 +289,7 @@ export async function httpForgotPassword(
   const token = generateRandomUuid(190, 'base64');
   const tok = await createToken({ token, userId: user.id });
   if (tok.error) {
-  logger.info("Token error ...");
+    logger.info('Token error ...');
 
     if (tok.status) {
       throw createHttpError.BadRequest(tok.error);
@@ -304,7 +304,7 @@ export async function httpForgotPassword(
     reset: true,
     userGroup: user.userGroup,
   });
-  logger.info("transport email ...");
+  logger.info('transport email ...');
   transport
     .sendMail(msg)
     .then((_) => logger.info(`reset password set to user with email ${email}`))
@@ -410,8 +410,6 @@ export async function httpResetPassword(
   }
 
   if (src && src === 'activate') {
-    console.log('here');
-
     const result = await UserService.changeUserStatus({
       id: userId,
       status: 'active',
