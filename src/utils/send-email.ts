@@ -34,7 +34,7 @@ const message = ({
     userGroup,
   });
   return {
-    from: 'alexlim@mmdt.cc',
+    from: process.env.EMAIL_FROM,
     to: email,
     subject: subject,
     text: 'For clients with plaintext support only',
