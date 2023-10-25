@@ -154,7 +154,7 @@ export const maintenanceLogs = pgTable('maintenance_logs', {
   isCompleted: boolean('isCompleted').default(false).notNull(),
   rejectReason: varchar('rejectReason').default('').notNull(),
   isDeleted: boolean('isDeleted').default(false).notNull(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull(),
 });
 
 export type NewMaintenanceLog = Omit<

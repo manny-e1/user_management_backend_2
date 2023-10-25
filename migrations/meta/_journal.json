@@ -15,6 +15,20 @@
       "when": 1692018257092,
       "tag": "0001_worthless_nova",
       "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1698239108933,
+      "tag": "0002_solid_mystique",
+      "breakpoints": false
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1698247872356,
+      "tag": "0003_silent_sentinels",
+      "breakpoints": false
     }
   ]
 }

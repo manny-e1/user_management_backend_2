@@ -25,9 +25,8 @@ export async function httpCreateMntLogs(
   >,
   res: Response
 ) {
-  const mntLogs: (Omit<NewMaintenanceLog, 'createdAt'> & {
-    createdAt: Date;
-  })[] = [];
+  const mntLogs: (NewMaintenanceLog & { createdAt: Date; updatedAt: Date })[] =
+    [];
 
   req.body.map((item) => {
     const { startDate, endDate, iRakyatYN, iBizRakyatYN, submittedBy } = item;
@@ -37,8 +36,9 @@ export async function httpCreateMntLogs(
       iRakyatYN: iRakyatYN,
       iBizRakyatYN: iBizRakyatYN,
       submittedBy: submittedBy,
-      createdAt: new Date(),
       submittedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   });
   const result = MntService.createMntLogs(mntLogs);

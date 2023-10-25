@@ -9,7 +9,7 @@ import { ERRORS } from '@/utils/errors.js';
 import { desc, eq, inArray, sql, and } from 'drizzle-orm';
 
 export async function createMntLogs(
-  body: (Omit<NewMaintenanceLog, 'createdAt'> & { createdAt: Date })[]
+  body: (NewMaintenanceLog & { createdAt: Date; updatedAt: Date })[]
 ) {
   try {
     await db.insert(maintenanceLogs).values(body);
@@ -35,11 +35,11 @@ export async function getMntLogs() {
         iBizRakyatStatus: maintenanceLogs.iBizRakyatStatus,
         submissionStatus: maintenanceLogs.submissionStatus,
         approvalStatus: maintenanceLogs.approvalStatus,
-        // updatedAt: maintenanceLogs.updatedAt
+        // updatedAt: maintenanceLogs.updatedAt,
+        // createdAt: maintenanceLogs.createdAt,
       })
       .from(maintenanceLogs)
-      .orderBy(desc(maintenanceLogs.createdAt))
-      .orderBy(desc(maintenanceLogs.id));
+      .orderBy(desc(maintenanceLogs.updatedAt));
 
     const now = new Date().toISOString();
     const data = mntLogs.map((item, index: number) => {
@@ -109,6 +109,7 @@ export async function updateMntLog(id: string, data: NewMaintenanceLog) {
         iRakyatStatus: '',
         iBizRakyatStatus: '',
         submittedAt: new Date(),
+        updatedAt: new Date(),
       })
       .where(eq(maintenanceLogs.id, id));
     return { message: 'success' };
@@ -129,6 +130,7 @@ export async function delMntLog(id: string) {
         submittedAt: new Date(),
         iRakyatStatus: '',
         iBizRakyatStatus: '',
+        updatedAt: new Date(),
       })
       .where(eq(maintenanceLogs.id, id));
     return { message: 'success' };
