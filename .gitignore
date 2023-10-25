@@ -2,5 +2,5 @@ node_modules
 *.log
 .DS_Store
 .env
-_MACOSX/
+__MACOSX/
 migrations/
