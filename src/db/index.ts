@@ -31,6 +31,9 @@ if (process.env.NODE_ENV === 'development') {
 const pool = new pg.Pool({
   ...config,
 });
-
-await pool.connect();
+try {
+  await pool.connect();
+} catch (error) {
+  logger.error(error);
+}
 export const db = drizzle(pool);

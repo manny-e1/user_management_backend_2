@@ -20,24 +20,27 @@ export async function createMntLogs(
   }
 }
 
-export async function getMntLogs() {
+export async function getMntLogs(client?: 'b2c') {
+  const fullObj = {
+    id: maintenanceLogs.id,
+    submittedAt: maintenanceLogs.submittedAt,
+    submittedBy: maintenanceLogs.submittedBy,
+    startDate: maintenanceLogs.startDate,
+    endDate: maintenanceLogs.endDate,
+    iRakyatYN: maintenanceLogs.iRakyatYN,
+    iBizRakyatYN: maintenanceLogs.iBizRakyatYN,
+    iRakyatStatus: maintenanceLogs.iRakyatStatus,
+    iBizRakyatStatus: maintenanceLogs.iBizRakyatStatus,
+    submissionStatus: maintenanceLogs.submissionStatus,
+    approvalStatus: maintenanceLogs.approvalStatus,
+    // updatedAt: maintenanceLogs.updatedAt,
+    // createdAt: maintenanceLogs.createdAt,
+  };
+  const { submittedBy: _, ...forB2C } = fullObj;
+  const returnData = client ? forB2C : fullObj;
   try {
     const mntLogs = await db
-      .select({
-        id: maintenanceLogs.id,
-        submittedAt: maintenanceLogs.submittedAt,
-        submittedBy: maintenanceLogs.submittedBy,
-        startDate: maintenanceLogs.startDate,
-        endDate: maintenanceLogs.endDate,
-        iRakyatYN: maintenanceLogs.iRakyatYN,
-        iBizRakyatYN: maintenanceLogs.iBizRakyatYN,
-        iRakyatStatus: maintenanceLogs.iRakyatStatus,
-        iBizRakyatStatus: maintenanceLogs.iBizRakyatStatus,
-        submissionStatus: maintenanceLogs.submissionStatus,
-        approvalStatus: maintenanceLogs.approvalStatus,
-        // updatedAt: maintenanceLogs.updatedAt,
-        // createdAt: maintenanceLogs.createdAt,
-      })
+      .select(returnData)
       .from(maintenanceLogs)
       .orderBy(desc(maintenanceLogs.updatedAt));
 

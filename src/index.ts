@@ -8,8 +8,7 @@ await migrate(db, {
   migrationsFolder: 'migrations',
 });
 
-const port = parseInt(process.env.PORT || '5000', 10);
-
+const port = parseInt(process.env.PORT || '5001', 10);
 const server = http.createServer(app);
 
 server.listen(port, '0.0.0.0', () => {

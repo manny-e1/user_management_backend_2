@@ -41,9 +41,34 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
+const domains = [
+  'http://54.254.130.192:3000',
+  'http://54.254.130.192:3001',
+  'https://payment.bkrm.pro',
+  'https://admin.bkrm.pro',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  '127.0.0.1',
+];
+const domainsToUse =
+  process.env.NODE_ENV === 'development'
+    ? domains
+    : domains.slice(0, domains.length - 3);
+
+const ipTable = domainsToUse.map((domain) => domain.split('://').at(-1));
+
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: domainsToUse }));
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (!ipTable.includes(req.ip.split(':').at(-1) ?? 'not in')) {
+    return res
+      .status(401)
+      .json({ error: "you don't have the privilage to access this endpoint" });
+  }
+  next();
+});
 
 app.get('/', async (req, res) => {
   res.json({ message: 'hello' });
