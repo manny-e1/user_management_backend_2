@@ -42,18 +42,19 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const domains = [
-  'http://54.254.130.192:3000',
-  'http://54.254.130.192:3001',
+  'http://54.254.130.92:3000',
+  'http://54.254.130.92:3001',
   'https://payment.bkrm.pro',
   'https://admin.bkrm.pro',
   'http://127.0.0.1:3000',
+  'http://localhost:3000',
   'http://127.0.0.1:3001',
   '127.0.0.1',
 ];
 const domainsToUse =
   process.env.NODE_ENV === 'development'
     ? domains
-    : domains.slice(0, domains.length - 3);
+    : domains.slice(0, domains.length - 4);
 
 app.use(helmet());
 app.use(
