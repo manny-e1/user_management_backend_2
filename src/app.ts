@@ -55,14 +55,13 @@ const domainsToUse =
     ? domains
     : domains.slice(0, domains.length - 3);
 
-const ipTable = domainsToUse.map((domain) => domain.split('://').at(-1));
-
 app.use(helmet());
 app.use(cors({ origin: domainsToUse }));
 app.use(express.json());
 
 app.use((req, res, next) => {
-  if (!ipTable.includes(req.ip.split(':').at(-1) ?? 'not in')) {
+  const referer = req.headers.referer || '';
+  if (!domainsToUse.includes(referer.slice(0, referer.length - 1))) {
     return res
       .status(401)
       .json({ error: "you don't have the privilage to access this endpoint" });
