@@ -56,7 +56,17 @@ const domainsToUse =
     : domains.slice(0, domains.length - 3);
 
 app.use(helmet());
-app.use(cors({ origin: domainsToUse }));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (domainsToUse.indexOf(origin || '') !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+  })
+);
 app.use(express.json());
 
 app.use((req, res, next) => {
