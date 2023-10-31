@@ -46,6 +46,7 @@ const domains = [
   'http://54.254.130.92:3001',
   'https://payment.bkrm.pro',
   'https://admin.bkrm.pro',
+  '',
   'http://127.0.0.1:3000',
   'http://localhost:3000',
   'http://127.0.0.1:3001',
@@ -60,10 +61,15 @@ app.use(helmet());
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (domainsToUse.indexOf(origin || '') !== -1) {
+      if (!origin || domainsToUse.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        return callback(
+          new Error(
+            'The CORS policy for this site does not allow access from the specified Origin.'
+          ),
+          false
+        );
       }
     },
   })
