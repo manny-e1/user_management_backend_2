@@ -1,13 +1,13 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db/index.js';
 import {
-  passwordHistory,
+  loginSessions,
   roles,
   userGroups,
   users,
   wrongPasswordTrial,
 } from '@/db/schema.js';
-import type { Status } from '@/db/schema.js';
+import type { LoginSession, Status } from '@/db/schema.js';
 import { ERRORS } from '@/utils/errors.js';
 import { logger } from '@/logger.js';
 import { SelectedFields, date } from 'drizzle-orm/pg-core';
@@ -297,6 +297,44 @@ export async function deleteWrongPassTrials(id: string) {
     if (err.message.includes('invalid input syntax for type uuid')) {
       return { error: ERRORS.INVALID_ID };
     }
+    return { error: err.message };
+  }
+}
+
+export async function createLoginSession(
+  body: Omit<LoginSession, 'id' | 'createdAt' | 'status'>
+) {
+  try {
+    const newUser = await db.insert(loginSessions).values({ ...body });
+    return { message: 'success' };
+  } catch (error) {
+    logger.error(error);
+    const err = error as Error;
+    return { error: err.message };
+  }
+}
+
+export async function getLoginSession(
+  body: Pick<LoginSession, 'userId' | 'ip' | 'userAgent'>
+) {
+  try {
+    const loginSession = await db
+      .select()
+      .from(loginSessions)
+      .where(
+        and(
+          eq(loginSessions.userId, body.userId),
+          eq(loginSessions.ip, body.ip),
+          eq(loginSessions.userAgent, body.userAgent)
+        )
+      );
+    if (!loginSession.length) {
+      return { error: 'not found' };
+    }
+    return { loginSession: loginSession[0] };
+  } catch (error) {
+    logger.error(error);
+    const err = error as Error;
     return { error: err.message };
   }
 }

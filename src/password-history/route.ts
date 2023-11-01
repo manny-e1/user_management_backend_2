@@ -4,9 +4,14 @@ import {
   httpChangeLastPwdDate,
   httpCheckPasswordValidity,
 } from './controller.js';
+import { isAuthenticated } from '@/middleware/privilage.js';
 
 const router = Router();
 
-router.get('/:userId', errorCatcher(httpCheckPasswordValidity));
+router.get(
+  '/:userId',
+  errorCatcher(isAuthenticated),
+  errorCatcher(httpCheckPasswordValidity)
+);
 router.post('/change-date', errorCatcher(httpChangeLastPwdDate));
 export { router as passwordHistoryRouter };

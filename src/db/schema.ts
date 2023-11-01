@@ -1,4 +1,3 @@
-import { timeStamp } from 'console';
 import { InferModel } from 'drizzle-orm';
 import {
   integer,
@@ -12,6 +11,7 @@ import {
   varchar,
   boolean,
   doublePrecision,
+  text,
 } from 'drizzle-orm/pg-core';
 
 //roles
@@ -23,6 +23,9 @@ export const roleEnum = pgEnum('role', [
   'manager 1',
   'manager 2',
 ]);
+
+//login_sessions
+export const loginSessionEnum = pgEnum('login_session', ['active', 'expired']);
 
 export const roles = pgTable(
   'roles',
@@ -195,3 +198,19 @@ export const wrongPasswordTrial = pgTable('wrong_password_trials', {
     .notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
+
+//login_session
+export const loginSessions = pgTable('login_sessions', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  userRole: roleEnum('user_role').notNull(),
+  status: loginSessionEnum('status').default('active'),
+  ip: varchar('ip', { length: 16 }).notNull(),
+  userAgent: text('user_agent').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export type LoginSession = InferModel<typeof loginSessions>;

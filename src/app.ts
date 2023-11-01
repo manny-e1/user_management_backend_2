@@ -16,6 +16,18 @@ import { passwordHistoryRouter } from './password-history/route.js';
 import { maintenanceLogRouter } from './system-maintenance/route.js';
 import dotenv from 'dotenv';
 import { commonRouter } from './common/route.js';
+import { ENVOBJ } from './utils/common-types.js';
+import { ZodError } from 'zod';
+import { Role } from './db/schema.js';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user: { id?: string; role?: Role };
+    }
+  }
+}
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +35,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(path.dirname(__filename));
 
 const app = express();
+
+try {
+  ENVOBJ.parse(process.env);
+} catch (error) {
+  logger.error((error as ZodError).message);
+  throw new Error((error as ZodError).message);
+}
 
 if (process.env.NODE_ENV !== 'production') {
   logger.add(
@@ -44,18 +63,19 @@ if (process.env.NODE_ENV !== 'production') {
 const domains = [
   'http://54.254.130.92:3000',
   'http://54.254.130.92:3001',
+  'http://13.229.106.122:3000',
   'https://payment.bkrm.pro',
   'https://admin.bkrm.pro',
-  '',
   'http://127.0.0.1:3000',
   'http://localhost:3000',
+  'http://localhost:3001',
   'http://127.0.0.1:3001',
   '127.0.0.1',
 ];
 const domainsToUse =
-  process.env.NODE_ENV === 'development'
+  process.env.NODE_ENV !== 'production'
     ? domains
-    : domains.slice(0, domains.length - 4);
+    : domains.slice(0, domains.length - 5);
 
 app.use(helmet());
 app.use(
@@ -74,11 +94,15 @@ app.use(
     },
   })
 );
+
 app.use(express.json());
 
 app.use((req, res, next) => {
-  const referer = req.headers.referer || '';
-  if (!domainsToUse.includes(referer.slice(0, referer.length - 1))) {
+  const address =
+    (req.headers['x-forwarded-for'] as string) ||
+    req.socket.remoteAddress ||
+    '';
+  if (!domainsToUse.includes(address)) {
     return res
       .status(401)
       .json({ error: "you don't have the privilage to access this endpoint" });

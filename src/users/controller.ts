@@ -143,8 +143,22 @@ export async function httpLogin(
     {
       id: user.id,
     },
-    process.env.SECRET_KEY ?? 'secret'
+    process.env.SECRET_KEY
   );
+  const ip =
+    (req.headers['x-forwarded-for'] as string) ||
+    req.socket.remoteAddress ||
+    '';
+  const userAgent = req.headers['user-agent'] || '';
+  const loginSession = await UserService.createLoginSession({
+    ip,
+    userAgent,
+    userId: user.id,
+    userRole: user.role,
+  });
+  if (loginSession.error) {
+    throw createHttpError.InternalServerError("couldn't create login session");
+  }
   return res.status(200).json({
     user: {
       id: user.id,
