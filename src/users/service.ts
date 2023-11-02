@@ -338,3 +338,34 @@ export async function getLoginSession(
     return { error: err.message };
   }
 }
+
+export async function logoutUser({
+  id,
+  userAgent,
+  ip,
+}: {
+  id: string;
+  userAgent: string;
+  ip: string;
+}) {
+  try {
+    const result = await db
+      .update(loginSessions)
+      .set({ status: 'expired' })
+      .where(
+        and(
+          eq(loginSessions.userId, id),
+          eq(loginSessions.userAgent, userAgent),
+          eq(loginSessions.ip, ip)
+        )
+      );
+    if (result.rowCount === 0) {
+      return { error: ERRORS.UPDATE_FAILED };
+    }
+    return { message: 'success' };
+  } catch (error) {
+    logger.error(error);
+    const err = error as Error;
+    return { error: err.message };
+  }
+}

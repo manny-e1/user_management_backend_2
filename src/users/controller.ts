@@ -474,6 +474,26 @@ export async function httpDeleteUser(
   res.status(200).json(result);
 }
 
+export async function httpLogoutUser(
+  req: Request<{ id: string }>,
+  res: Response
+) {
+  const { id } = req.params;
+  const ip =
+    (req.headers['x-forwarded-for'] as string) ||
+    req.socket.remoteAddress ||
+    '';
+  const userAgent = req.headers['user-agent'] || '';
+  const result = await UserService.logoutUser({ id, userAgent, ip });
+  if (result.error) {
+    if (result.error === ERRORS.UPDATE_FAILED) {
+      throw createHttpError.NotFound('Failed to logout the user');
+    }
+    throw createHttpError(result.error);
+  }
+  res.status(200).json(result);
+}
+
 // export async function httpDeleteWrongPassTrials(
 //   req: Request<{}, {}, { id: string }>,
 //   res: Response

@@ -11,6 +11,11 @@ router
   .post(errorCatcher(UserController.httpCreateUser))
   .get(errorCatcher(UserController.httpGetAllUsers));
 router.post('/login', errorCatcher(UserController.httpLogin));
+router.patch(
+  '/:id',
+  errorCatcher(isAuthenticated),
+  errorCatcher(UserController.httpLogoutUser)
+);
 router.get('/check', errorCatcher(UserController.httpCheckUserByUserGroup));
 router.patch('/activate', errorCatcher(UserController.httpActivateUser));
 router.post(
