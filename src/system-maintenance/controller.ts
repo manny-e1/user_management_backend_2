@@ -51,12 +51,11 @@ export async function httpCreateMntLogs(
  * @returns All records of Maintenance Data
  */
 export async function httpGetMntLogs(
-  req: Request<{}, {}, NewMaintenanceLog, { client?: 'b2c' }>,
+  req: Request<{}, {}, NewMaintenanceLog>,
   res: Response
 ) {
-  let { client } = req.query;
-  client = client === 'b2c' ? client : undefined;
-  const result = await MntService.getMntLogs(client);
+  const paymentSite = req.user === undefined;
+  const result = await MntService.getMntLogs(paymentSite);
   if (result.error) {
     throw createHttpError(result.error);
   }

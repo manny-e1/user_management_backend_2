@@ -14,8 +14,16 @@ export async function isAuthenticated(
   const token = req.headers.authorization?.includes('Bearer')
     ? req.headers.authorization.split(' ')[1]
     : undefined;
+
   if (!token) {
-    throw createHttpError.Unauthorized();
+    if (
+      !req.originalUrl.includes('last-updated') &&
+      !req.originalUrl.includes('maintenance')
+    ) {
+      throw createHttpError.Unauthorized();
+    }
+    next();
+    return;
   }
   try {
     const parsedToken = ZJwtPayload.safeParse(
@@ -47,70 +55,78 @@ export async function isAuthenticated(
   }
 }
 
-export async function isAdmin(req: Request, res: Response, next: NextFunction) {
-  if (req.user.role !== 'admin') throw createHttpError.Forbidden();
+export async function isAdmin(req: Request, _: Response, next: NextFunction) {
+  if (req.user?.role !== 'admin') throw createHttpError.Forbidden();
   next();
 }
 
 export async function isAdminOrAdmin2(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'admin' && req.user.role !== 'admin 2')
+  if (req.user?.role !== 'admin' && req.user?.role !== 'admin 2')
     throw createHttpError.Forbidden();
   next();
 }
 
 export async function isManager1(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'manager 1') throw createHttpError.Forbidden();
+  if (req.user?.role !== 'manager 1') throw createHttpError.Forbidden();
   next();
 }
 export async function isManager2(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'manager 2') throw createHttpError.Forbidden();
+  if (req.user?.role !== 'manager 2') throw createHttpError.Forbidden();
   next();
 }
 export async function isNormalUser1(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'normal user 1') throw createHttpError.Forbidden();
+  if (req.user?.role !== 'normal user 1') throw createHttpError.Forbidden();
   next();
 }
 export async function isNormalUser2(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'normal user 2') throw createHttpError.Forbidden();
+  if (req.user?.role !== 'normal user 2') throw createHttpError.Forbidden();
   next();
 }
 
 export async function isNormalUser1OrManager1(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'normal user 1' && req.user.role !== 'manager 1')
+  if (!req.user) {
+    next();
+    return;
+  }
+  if (req.user?.role !== 'normal user 1' && req.user?.role !== 'manager 1')
     throw createHttpError.Forbidden();
   next();
 }
 
 export async function isNormalUser2OrManager2(
   req: Request,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
-  if (req.user.role !== 'normal user 2' && req.user.role !== 'manager 2')
+  if (!req.user) {
+    next();
+    return;
+  }
+  if (req.user?.role !== 'normal user 2' && req.user?.role !== 'manager 2')
     throw createHttpError.Forbidden();
   next();
 }

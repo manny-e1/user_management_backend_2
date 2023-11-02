@@ -62,7 +62,40 @@ export async function httpGetLastUpdatedValue(req: Request, res: Response) {
     }
     throw createHttpError(result.error);
   }
-  res.json(result);
+
+  if (req.user) {
+    return res.json(result);
+  }
+  const {
+    cCIB,
+    cCMB,
+    cRIB,
+    cRMB,
+    id,
+    createdAt,
+    nCIB,
+    nCMB,
+    nRIB,
+    nRMB,
+    status,
+    updatedAt,
+  } = result.txnLog!;
+  res.json({
+    txnLog: {
+      cCIB,
+      cCMB,
+      cRIB,
+      cRMB,
+      nCIB,
+      nCMB,
+      nRIB,
+      nRMB,
+      id,
+      createdAt,
+      status,
+      updatedAt,
+    },
+  });
 }
 
 export async function httpChangeStatus(

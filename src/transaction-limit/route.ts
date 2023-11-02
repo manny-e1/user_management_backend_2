@@ -24,6 +24,8 @@ router
   );
 router.get(
   '/last-updated',
+  errorCatcher(isAuthenticated),
+  errorCatcher(isNormalUser1OrManager1),
   errorCatcher(TransactionLogController.httpGetLastUpdatedValue)
 );
 router

@@ -20,7 +20,7 @@ export async function createMntLogs(
   }
 }
 
-export async function getMntLogs(client?: 'b2c') {
+export async function getMntLogs(paymentSite: boolean) {
   const fullObj = {
     id: maintenanceLogs.id,
     submittedAt: maintenanceLogs.submittedAt,
@@ -37,7 +37,7 @@ export async function getMntLogs(client?: 'b2c') {
     // createdAt: maintenanceLogs.createdAt,
   };
   const { submittedBy: _, ...forB2C } = fullObj;
-  const returnData = client ? forB2C : fullObj;
+  const returnData = paymentSite ? forB2C : fullObj;
   try {
     const mntLogs = await db
       .select(returnData)
