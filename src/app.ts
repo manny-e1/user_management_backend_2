@@ -5,7 +5,7 @@ import express from 'express';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import cors from 'cors';
-import winston from 'winston';
+import winston, { add } from 'winston';
 import { logger } from './logger.js';
 import { errorHandler, notFound } from './middleware/error-middleware.js';
 import { userRouter } from './users/route.js';
@@ -98,10 +98,14 @@ app.use(
 app.use(express.json());
 
 app.use((req, res, next) => {
-  const address =
+  let address =
     (req.headers['x-forwarded-for'] as string) ||
+    req.headers.referer ||
     req.socket.remoteAddress ||
     '';
+  if (address.endsWith('/')) {
+    address = address.slice(0, address.length - 1);
+  }
   if (!domainsToUse.includes(address)) {
     return res
       .status(401)
