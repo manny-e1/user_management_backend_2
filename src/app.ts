@@ -64,6 +64,8 @@ const domains = [
   'http://54.254.130.92:3000',
   'http://54.254.130.92:3001',
   'http://13.229.106.122:3000',
+  '196.191.190.114',
+  'http://196.191.190.114:3000',
   'https://payment.bkrm.pro',
   'https://admin.bkrm.pro',
   'http://127.0.0.1:3000',
@@ -97,22 +99,22 @@ app.use(
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  let address =
-    (req.headers['x-forwarded-for'] as string) ||
-    req.headers.referer ||
-    req.socket.remoteAddress ||
-    '';
-  if (address.endsWith('/')) {
-    address = address.slice(0, address.length - 1);
-  }
-  if (!domainsToUse.includes(address)) {
-    return res
-      .status(401)
-      .json({ error: "you don't have the privilage to access this endpoint" });
-  }
-  next();
-});
+// app.use((req, res, next) => {
+//   let address =
+//     (req.headers['x-forwarded-for'] as string) ||
+//     req.headers.referer ||
+//     req.socket.remoteAddress ||
+//     '';
+//   if (address.endsWith('/')) {
+//     address = address.slice(0, address.length - 1);
+//   }
+//   if (!domainsToUse.includes(address)) {
+//     return res
+//       .status(401)
+//       .json({ error: "you don't have the privilage to access this endpoint" });
+//   }
+//   next();
+// });
 
 app.get('/', async (req, res) => {
   res.json({ message: 'hello' });
