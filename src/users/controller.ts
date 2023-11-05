@@ -58,9 +58,11 @@ export async function httpCreateUser(
   });
   transport
     .sendMail(msg)
-    .then((_) => logger.info(`reset password set to user with email ${email}`))
+    .then((_) =>
+      logger.info(`user activation email sent to user with address ${email}`)
+    )
     .catch((err) =>
-      logger.error(`sending reset password email for ${email} failed`, err)
+      logger.error(`sending user activation email for ${email} failed`, err)
     );
   res.status(201).json({ message: 'success' });
 }
