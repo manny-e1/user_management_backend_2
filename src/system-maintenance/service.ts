@@ -48,8 +48,8 @@ export async function getMntLogs(paymentSite: boolean) {
 
     const data = mntLogs.map((item, index: number) => {
       if (
-        item.endDate.toISOString() < now &&
-        item.approvalStatus == 'Approved'
+        item.endDate.toISOString() < now
+        // &&item.approvalStatus == 'Approved'
       ) {
         return {
           ...item,
