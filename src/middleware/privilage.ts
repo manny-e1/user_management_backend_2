@@ -18,7 +18,7 @@ export async function isAuthenticated(
   if (!token) {
     if (
       !req.originalUrl.includes('last-updated') &&
-      !req.originalUrl.includes('maintenance')
+      req.originalUrl !== '/api/maintenance'
     ) {
       throw createHttpError.Unauthorized();
     }
