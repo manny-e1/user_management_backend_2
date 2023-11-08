@@ -61,7 +61,7 @@ router
   .route('/complete')
   .post(
     errorCatcher(isAuthenticated),
-    errorCatcher(isManager2),
+    errorCatcher(isNormalUser2OrManager2),
     errorCatcher(MaintenanceController.httpCompleteMntLogs)
   );
 
