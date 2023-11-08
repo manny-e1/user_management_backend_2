@@ -64,8 +64,8 @@ export async function getMntLogs(paymentSite: boolean) {
         return {
           ...item,
           mid: index + 1,
-          iRakyatStatus: item.iRakyatYN ? 'A' : '',
-          iBizRakyatStatus: item.iBizRakyatYN ? 'A' : '',
+          // iRakyatStatus: item.iRakyatYN ? 'A' : '',
+          // iBizRakyatStatus: item.iBizRakyatYN ? 'A' : '',
         };
       } else {
         return {
@@ -154,8 +154,8 @@ export async function approveMntLogs(ids: string[], email: string) {
         updatedAt: new Date(),
         approvedBy: email,
         approvalStatus: 'Approved',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
       })
       .where(inArray(maintenanceLogs.id, ids));
@@ -174,6 +174,8 @@ export async function rejectMntLogs(ids: string[], email: string, msg: string) {
       .set({
         updatedAt: new Date(),
         approvalStatus: 'Rejected',
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'A' ELSE "iRakyatStatus" END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'A' ELSE "iBizRakyatStatus" END) ELSE '' END`,
         approvedBy: email,
         rejectReason: msg,
       })
@@ -209,14 +211,14 @@ export async function completeMntLogs(id: string, channel: string) {
               submissionStatus: 'Marked',
               isCompleted: true,
               submittedAt: new Date(),
-              iRakyatStatus: 'C',
+              iRakyatStatus: 'CC',
             }
           : {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
               isCompleted: true,
               submittedAt: new Date(),
-              iBizRakyatStatus: 'C',
+              iBizRakyatStatus: 'CC',
             }
       )
       .where(eq(maintenanceLogs.id, id));
