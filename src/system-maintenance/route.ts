@@ -32,7 +32,7 @@ router
   )
   .put(
     errorCatcher(isAuthenticated),
-    errorCatcher(isNormalUser2),
+    errorCatcher(isNormalUser2OrManager2),
     errorCatcher(MaintenanceController.httpUpdateMntLog)
   )
   .delete(

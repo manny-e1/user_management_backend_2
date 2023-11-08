@@ -45,6 +45,7 @@ export async function getMntLogs(paymentSite: boolean) {
       .orderBy(desc(maintenanceLogs.updatedAt));
 
     const now = new Date().toISOString();
+
     const data = mntLogs.map((item, index: number) => {
       if (
         item.endDate.toISOString() < now &&
@@ -109,8 +110,8 @@ export async function updateMntLog(id: string, data: NewMaintenanceLog) {
         ...data,
         submissionStatus: 'Edited',
         approvalStatus: 'Pending',
-        iRakyatStatus: '',
-        iBizRakyatStatus: '',
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
         submittedAt: new Date(),
         updatedAt: new Date(),
       })
