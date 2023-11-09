@@ -56,6 +56,7 @@ export async function getMntLogs(paymentSite: boolean) {
           mid: index + 1,
           iRakyatStatus: item.iRakyatYN ? 'C' : '',
           iBizRakyatStatus: item.iBizRakyatYN ? 'C' : '',
+          isCompleted: true,
         };
       } else if (
         item.approvalStatus == 'Rejected' &&
@@ -91,7 +92,23 @@ export async function getMntLog(id: string) {
     if (!maintenanceLog.length) {
       return { error: ERRORS.NOT_FOUND };
     }
-    return { mntLog: maintenanceLog[0] };
+    const mntLog = maintenanceLog[0];
+    const now = new Date().toISOString();
+    if (
+      mntLog.endDate.toISOString() < now
+      // &&mntLog.approvalStatus == 'Approved'
+    ) {
+      return {
+        mntLog: {
+          ...mntLog,
+          iRakyatStatus: mntLog.iRakyatYN ? 'C' : '',
+          iBizRakyatStatus: mntLog.iBizRakyatYN ? 'C' : '',
+          isCompleted: true,
+        },
+      };
+    } else {
+      return { mntLog };
+    }
   } catch (error) {
     logger.error(error);
     const err = error as Error;
