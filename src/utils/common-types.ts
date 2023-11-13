@@ -20,7 +20,7 @@ export const ENVOBJ = object({
   EMAIL_PASS_LOCAL: string().optional(),
   SECRET_KEY: string(),
   NODE_ENV: union([literal('development'), literal('production')]),
-  // SENDGRID_API_KEY: string;
+  FRONT_END_URL: string(),
   PORT: string(),
 });
 

@@ -24,12 +24,12 @@ const message = ({
   userGroup: string;
 }) => {
   const pwdReset = resetPasswordEmailTemplate({
-    link: `http://54.254.130.92:3001/change-password?token=${token}`,
+    link: `${process.env.FRONT_END_URL}/change-password?token=${token}`,
     name,
   });
 
   const accActivation = activationEmailTemplate({
-    link: `http://54.254.130.92:3001/set-password?token=${token}`,
+    link: `${process.env.FRONT_END_URL}/set-password?token=${token}`,
     name,
     userGroup,
   });
