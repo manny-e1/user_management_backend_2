@@ -1,5 +1,5 @@
 {
-  "name": "user_management",
+  "name": "admin_portal_backend",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
