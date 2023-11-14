@@ -62,7 +62,7 @@ npm install pm2 -g
 Then, you can start the application with **pm2**:
 
 ```bash
-pm2 run pm2
+npm run pm2
 ```
 
 ## Packages Used
