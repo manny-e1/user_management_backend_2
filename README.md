@@ -7,6 +7,13 @@ This README provides information about the Admin Portal, a backend project. It c
 To run this project, it's recommended to have these installed on your computer.
 
 - Node.js (v16.14.0 or higher)
+  To install Node.js 18.\*, use the following command:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - &&\
+sudo apt-get install -y nodejs
+```
+
 - npm (v8.0.0 or higher)
 
 ## Running the Application
@@ -114,19 +121,25 @@ Before starting to create user-groups make sure to manually create the 6 roles t
 
 Since there is no means of creating users and user-groups if there isn’t already a user with admin/admin 2 roles, you have to use the api endpoints to create a user-group with an admin role and a user with that user-group. You can use curl or postman to do this.
 
-1. Creating a user-group
+1. Creating a role
+
+```bash
+curl -X POST -d '{"role":"admin"}' -H "Content-Type:application/json" localhost:5001/api/roles
+```
+
+2. Creating a user-group
 
 ```bash
 curl -X POST -d '{"name":"group_name", "roleId":1}' -H "Content-Type:application/json" localhost:5001/api/groups
 ```
 
-2. Creating a user account
+3. Creating a user account
 
 ```bash
 curl -X POST -d '{"name":"some_name","staffId":"staff_id", "userGroup":"id_of_user-group__you_just_created", "email":"your_email"}' -H "Content-Type:application/json" http://localhost:5001/api/users
 ```
 
-3. Setting a password(if you didn’t get any email)
+4. Setting a password(if you didn’t get any email)
 
 ```bash
 curl -X POST -d '{"password":"8_chars_with_at_least_one_uppercase_letter_one_lowercase_letter_one_number_and_one_special_character", "id":"your_user_id", "src":"activate"}' -H "Content-Type:application/json" http://localhost:5001/api/users/reset-password
