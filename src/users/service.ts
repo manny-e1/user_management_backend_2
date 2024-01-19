@@ -315,7 +315,7 @@ export async function createLoginSession(
 }
 
 export async function getLoginSession(
-  body: Pick<LoginSession, 'userId' | 'ip' | 'userAgent'>
+  body: Pick<LoginSession, 'userId' | 'userAgent'>
 ) {
   try {
     const loginSession = await db
@@ -324,7 +324,6 @@ export async function getLoginSession(
       .where(
         and(
           eq(loginSessions.userId, body.userId),
-          eq(loginSessions.ip, body.ip),
           eq(loginSessions.userAgent, body.userAgent)
         )
       );
@@ -342,11 +341,9 @@ export async function getLoginSession(
 export async function logoutUser({
   id,
   userAgent,
-  ip,
 }: {
   id: string;
   userAgent: string;
-  ip: string;
 }) {
   try {
     const result = await db
@@ -355,8 +352,7 @@ export async function logoutUser({
       .where(
         and(
           eq(loginSessions.userId, id),
-          eq(loginSessions.userAgent, userAgent),
-          eq(loginSessions.ip, ip)
+          eq(loginSessions.userAgent, userAgent)
         )
       );
     if (result.rowCount === 0) {

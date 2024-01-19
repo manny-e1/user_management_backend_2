@@ -147,13 +147,9 @@ export async function httpLogin(
     },
     process.env.SECRET_KEY
   );
-  const ip =
-    (req.headers['x-forwarded-for'] as string) ||
-    req.socket.remoteAddress ||
-    '';
   const userAgent = req.headers['user-agent'] || '';
   const loginSession = await UserService.createLoginSession({
-    ip,
+    ip: '',
     userAgent,
     userId: user.id,
     userRole: user.role,
@@ -481,12 +477,12 @@ export async function httpLogoutUser(
   res: Response
 ) {
   const { id } = req.params;
-  const ip =
-    (req.headers['x-forwarded-for'] as string) ||
-    req.socket.remoteAddress ||
-    '';
+  // const ip =
+  //   (req.headers['x-forwarded-for'] as string) ||
+  //   req.socket.remoteAddress ||
+  //   '';
   const userAgent = req.headers['user-agent'] || '';
-  const result = await UserService.logoutUser({ id, userAgent, ip });
+  const result = await UserService.logoutUser({ id, userAgent });
   if (result.error) {
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound('Failed to logout the user');
