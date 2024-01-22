@@ -29,8 +29,6 @@ export async function isAuthenticated(
     const parsedToken = ZJwtPayload.safeParse(
       jwt.verify(token, process.env.SECRET_KEY)
     );
-    console.log({ parsedToken });
-
     if (!parsedToken.success) {
       throw createHttpError.Unauthorized();
     }
@@ -43,7 +41,6 @@ export async function isAuthenticated(
       userAgent,
       userId: parsedToken.data.id,
     });
-    console.log({ result });
     if (result.error) {
       throw createHttpError.Unauthorized();
     }

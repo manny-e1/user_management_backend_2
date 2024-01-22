@@ -324,9 +324,12 @@ export async function getLoginSession(
       .where(
         and(
           eq(loginSessions.userId, body.userId),
-          eq(loginSessions.userAgent, body.userAgent)
+          eq(loginSessions.userAgent, body.userAgent),
+          eq(loginSessions.status, 'active')
         )
-      );
+      )
+      .orderBy(desc(loginSessions.createdAt))
+      .limit(1);
     if (!loginSession.length) {
       return { error: 'not found' };
     }
