@@ -42,7 +42,7 @@ export async function getMntLogs(paymentSite: boolean) {
     const mntLogs = await db
       .select(returnData)
       .from(maintenanceLogs)
-      .orderBy(desc(maintenanceLogs.updatedAt));
+      .orderBy(desc(maintenanceLogs.createdAt));
 
     const now = new Date().toISOString();
 
@@ -176,6 +176,11 @@ export async function approveMntLogs(ids: string[], email: string) {
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
       })
       .where(inArray(maintenanceLogs.id, ids));
+
+    await db
+      .delete(maintenanceLogs)
+      .where(eq(maintenanceLogs.isDeleted, true));
+      
     return { message: 'success' };
   } catch (error) {
     logger.error(error);
