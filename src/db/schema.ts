@@ -102,18 +102,26 @@ export const tokens = pgTable('tokens', {
 
 export type tokens = InferModel<typeof tokens>;
 
+//sources
+export const sourceEnum = pgEnum('source', ['activation', 'reset']);
+
 //password_history
 export const passwordHistory = pgTable('password_history', {
   id: serial('id').primaryKey(),
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
+  source: sourceEnum('source').default('reset').notNull(),
   password: varchar('password', { length: 256 }).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export type PasswordHistory = InferModel<typeof passwordHistory>;
+export type Sources = Pick<
+  InferModel<typeof passwordHistory>,
+  'source'
+>['source'];
 
 //Transaction log
 export const transactionLogs = pgTable('transaction_logs', {

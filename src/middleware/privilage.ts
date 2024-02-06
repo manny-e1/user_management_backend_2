@@ -55,7 +55,6 @@ export async function isAuthenticated(
 }
 
 export async function isAdmin(req: Request, _: Response, next: NextFunction) {
-  console.log('isAdmin', req.user);
   if (req.user?.role !== 'admin') throw createHttpError.Forbidden();
   next();
 }
@@ -65,7 +64,6 @@ export async function isAdminOrAdmin2(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isAdminoradmin2', req.user);
   if (req.user?.role !== 'admin' && req.user?.role !== 'admin 2')
     throw createHttpError.Forbidden();
   next();
@@ -76,7 +74,6 @@ export async function isManager1(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isManager', req.user);
   if (req.user?.role !== 'manager 1') throw createHttpError.Forbidden();
   next();
 }
@@ -85,7 +82,6 @@ export async function isManager2(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isManager2', req.user);
   if (req.user?.role !== 'manager 2') throw createHttpError.Forbidden();
   next();
 }
@@ -94,7 +90,6 @@ export async function isNormalUser1(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isNormalUser1', req.user);
   if (req.user?.role !== 'normal user 1') throw createHttpError.Forbidden();
   next();
 }
@@ -103,7 +98,6 @@ export async function isNormalUser2(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isNormalUser2', req.user);
   if (req.user?.role !== 'normal user 2') throw createHttpError.Forbidden();
   next();
 }
@@ -113,7 +107,6 @@ export async function isNormalUser1OrManager1(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isNormalUser1orManager1', req.user);
   if (!req.user) {
     next();
     return;
@@ -128,7 +121,6 @@ export async function isNormalUser2OrManager2(
   _: Response,
   next: NextFunction
 ) {
-  console.log('isNormlauser2orManager2', req.user);
   if (!req.user) {
     next();
     return;

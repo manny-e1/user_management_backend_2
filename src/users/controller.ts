@@ -405,14 +405,17 @@ export async function httpResetPassword(
       'You can’t reuse old password. Please enter new password'
     );
   }
-  if (!src) {
+
+  if (src !== 'activate') {
     let todayChangeCount = 0;
     const today = new Date();
-    pwdHistory.forEach((history) => {
-      if (isSameDay(today, history.createdAt)) {
-        todayChangeCount++;
-      }
-    });
+    pwdHistory
+      .filter((pwd) => pwd.source === 'reset')
+      .forEach((history) => {
+        if (isSameDay(today, history.createdAt)) {
+          todayChangeCount++;
+        }
+      });
 
     if (todayChangeCount >= 2) {
       throw createHttpError.BadRequest(
@@ -436,13 +439,16 @@ export async function httpResetPassword(
     }
   }
   const hashedPassword = await argon2.hash(password);
+
   const addPwdResult = await PasswordHistoryService.addToPasswordHistory({
     userId,
     password: hashedPassword,
+    source: src === 'activate' ? 'activation' : 'reset',
   });
   if (addPwdResult.error) {
     throw createHttpError.InternalServerError(addPwdResult.error);
   }
+
   const resetPwdResult = await UserService.resetPassword({
     userId,
     password: hashedPassword,
