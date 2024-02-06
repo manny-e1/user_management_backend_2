@@ -12,10 +12,16 @@ export async function addToPasswordHistory({
   password: string;
 }) {
   try {
-    await db.insert(passwordHistory).values({ userId, password });
+    const result = await db
+      .insert(passwordHistory)
+      .values({ userId, password });
+    if (!(result.rowCount > 0)) {
+      return { error: 'failed to add password' };
+    }
     return { message: 'success' };
   } catch (error) {
     logger.error(error);
+    return { error: (error as Error).message };
   }
 }
 

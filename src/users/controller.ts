@@ -436,23 +436,24 @@ export async function httpResetPassword(
     }
   }
   const hashedPassword = await argon2.hash(password);
-  const result2 = await UserService.resetPassword({
+  const addPwdResult = await PasswordHistoryService.addToPasswordHistory({
     userId,
     password: hashedPassword,
   });
-  if (result2.error) {
-    if (result2.error === ERRORS.NOT_FOUND) {
+  if (addPwdResult.error) {
+    throw createHttpError.InternalServerError(addPwdResult.error);
+  }
+  const resetPwdResult = await UserService.resetPassword({
+    userId,
+    password: hashedPassword,
+  });
+  if (resetPwdResult.error) {
+    if (resetPwdResult.error === ERRORS.NOT_FOUND) {
       throw createHttpError.NotFound('user not found');
     }
-    throw createHttpError(result2.error);
+    throw createHttpError(resetPwdResult.error);
   }
-  if (!src) {
-    await PasswordHistoryService.addToPasswordHistory({
-      userId,
-      password: hashedPassword,
-    });
-  }
-  res.json(result2);
+  res.json(resetPwdResult);
 }
 
 export async function httpDeleteUser(
