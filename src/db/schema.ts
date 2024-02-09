@@ -214,6 +214,7 @@ export const loginSessions = pgTable('login_sessions', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
+  sessionToken: text('session_token').notNull(),
   userRole: roleEnum('user_role').notNull(),
   status: loginSessionEnum('status').default('active'),
   ip: varchar('ip', { length: 16 }).notNull(),

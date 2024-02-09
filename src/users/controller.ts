@@ -153,6 +153,7 @@ export async function httpLogin(
     userAgent,
     userId: user.id,
     userRole: user.role,
+    sessionToken: token,
   });
   if (loginSession.error) {
     throw createHttpError.InternalServerError("couldn't create login session");

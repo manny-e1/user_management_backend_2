@@ -315,7 +315,7 @@ export async function createLoginSession(
 }
 
 export async function getLoginSession(
-  body: Pick<LoginSession, 'userId' | 'userAgent'>
+  body: Pick<LoginSession, 'userId' | 'userAgent' | 'sessionToken'>
 ) {
   try {
     const loginSession = await db
@@ -325,6 +325,7 @@ export async function getLoginSession(
         and(
           eq(loginSessions.userId, body.userId),
           eq(loginSessions.userAgent, body.userAgent),
+          eq(loginSessions.sessionToken, body.sessionToken),
           eq(loginSessions.status, 'active')
         )
       )
@@ -355,7 +356,8 @@ export async function logoutUser({
       .where(
         and(
           eq(loginSessions.userId, id),
-          eq(loginSessions.userAgent, userAgent)
+          eq(loginSessions.userAgent, userAgent),
+          eq(loginSessions.status, 'active')
         )
       );
     if (result.rowCount === 0) {
