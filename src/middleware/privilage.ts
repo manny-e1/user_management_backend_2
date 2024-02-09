@@ -32,14 +32,11 @@ export async function isAuthenticated(
     if (!parsedToken.success) {
       throw createHttpError.Unauthorized();
     }
-    // const ip =
-    //   (req.headers['x-forwarded-for'] as string) ||
-    //   req.socket.remoteAddress ||
-    //   '';
     const userAgent = req.headers['user-agent'] || '';
     const result = await getLoginSession({
       userAgent,
       userId: parsedToken.data.id,
+      sessionToken: token,
     });
     if (result.error) {
       throw createHttpError.Unauthorized();
@@ -50,7 +47,7 @@ export async function isAuthenticated(
     };
     next();
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw createHttpError.Unauthorized((error as Error).message);
   }
 }
 
@@ -107,10 +104,6 @@ export async function isNormalUser1OrManager1(
   _: Response,
   next: NextFunction
 ) {
-  if (!req.user) {
-    next();
-    return;
-  }
   if (req.user?.role !== 'normal user 1' && req.user?.role !== 'manager 1')
     throw createHttpError.Forbidden();
   next();
@@ -121,10 +114,6 @@ export async function isNormalUser2OrManager2(
   _: Response,
   next: NextFunction
 ) {
-  if (!req.user) {
-    next();
-    return;
-  }
   if (req.user?.role !== 'normal user 2' && req.user?.role !== 'manager 2')
     throw createHttpError.Forbidden();
   next();
