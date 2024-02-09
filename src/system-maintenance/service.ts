@@ -171,8 +171,8 @@ export async function approveMntLogs(ids: string[], email: string) {
         updatedAt: new Date(),
         approvedBy: email,
         approvalStatus: 'Approved',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "iRakyatStatus" != 'C' THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iRakyatYN" IS FALSE THEN '' ELSE "iRakyatStatus" END) END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "iBizRakyatStatus"!='C' THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iBizRakyatYN" IS FALSE THEN '' ELSE "iBizRakyatStatus" END) END`,
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
       })
       .where(inArray(maintenanceLogs.id, ids));
