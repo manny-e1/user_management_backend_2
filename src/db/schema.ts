@@ -162,7 +162,8 @@ export const maintenanceLogs = pgTable('maintenance_logs', {
   submissionStatus: varchar('submissionStatus').default('New').notNull(),
   approvalStatus: varchar('approvalStatus').default('Pending').notNull(),
   approvedBy: varchar('approvedBy').default('').notNull(),
-  isCompleted: boolean('isCompleted').default(false).notNull(),
+  iRakyatCN: boolean('iRakyatCN').default(false),
+  iBizRakyatCN: boolean('iBizRakyatCN').default(false),
   rejectReason: varchar('rejectReason').default('').notNull(),
   isDeleted: boolean('isDeleted').default(false).notNull(),
   updatedAt: timestamp('updated_at').notNull(),
@@ -174,13 +175,14 @@ export type NewMaintenanceLog = Omit<
   | 'submissionStatus'
   | 'approvalStatus'
   | 'approvedBy'
-  | 'isCompleted'
   | 'rejectReason'
   | 'iRakyatStatus'
   | 'iBizRakyatStatus'
   | 'isDeleted'
   | 'updatedAt'
   | 'createdAt'
+  | 'iRakyatCN'
+  | 'iBizRakyatCN'
 >;
 
 // Rejection Logs

@@ -33,9 +33,8 @@ export async function getMntLogs(paymentSite: boolean) {
     iBizRakyatStatus: maintenanceLogs.iBizRakyatStatus,
     submissionStatus: maintenanceLogs.submissionStatus,
     approvalStatus: maintenanceLogs.approvalStatus,
-    // updatedAt: maintenanceLogs.updatedAt,
-    // createdAt: maintenanceLogs.createdAt,
   };
+
   const { submittedBy: _, ...forB2C } = fullObj;
   const returnData = paymentSite ? forB2C : fullObj;
   try {
@@ -56,7 +55,6 @@ export async function getMntLogs(paymentSite: boolean) {
           mid: index + 1,
           iRakyatStatus: item.iRakyatYN ? 'C' : '',
           iBizRakyatStatus: item.iBizRakyatYN ? 'C' : '',
-          isCompleted: true,
         };
       } else if (
         item.approvalStatus == 'Rejected' &&
@@ -102,8 +100,7 @@ export async function getMntLog(id: string) {
         mntLog: {
           ...mntLog,
           iRakyatStatus: mntLog.iRakyatYN ? 'C' : '',
-          iBizRakyatStatus: mntLog.iBizRakyatYN ? 'C' : '',
-          isCompleted: true,
+          iBizRakyatStatus: mntLog.iBizRakyatYN ? 'C' : ''
         },
       };
     } else {
@@ -171,9 +168,11 @@ export async function approveMntLogs(ids: string[], email: string) {
         updatedAt: new Date(),
         approvedBy: email,
         approvalStatus: 'Approved',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "iRakyatStatus" != 'C' THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iRakyatYN" IS FALSE THEN '' ELSE "iRakyatStatus" END) END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "iBizRakyatStatus"!='C' THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iBizRakyatYN" IS FALSE THEN '' ELSE "iBizRakyatStatus" END) END`,
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
+        iRakyatCN: false,
+        iBizRakyatCN: false
       })
       .where(inArray(maintenanceLogs.id, ids));
 
@@ -196,10 +195,12 @@ export async function rejectMntLogs(ids: string[], email: string, msg: string) {
       .set({
         updatedAt: new Date(),
         approvalStatus: 'Rejected',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'A' ELSE "iRakyatStatus" END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'A' ELSE "iBizRakyatStatus" END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'A' ELSE "iRakyatStatus" END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'A' ELSE "iBizRakyatStatus" END) ELSE '' END`,
         approvedBy: email,
         rejectReason: msg,
+        iRakyatCN: false,
+        iBizRakyatCN: false
       })
       .where(inArray(maintenanceLogs.id, ids));
 
@@ -231,16 +232,14 @@ export async function completeMntLogs(id: string, channel: string) {
           ? {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
-              isCompleted: true,
               submittedAt: new Date(),
-              iRakyatStatus: 'CC',
+              iRakyatCN: true
             }
           : {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
-              isCompleted: true,
               submittedAt: new Date(),
-              iBizRakyatStatus: 'CC',
+              iBizRakyatCN: true
             }
       )
       .where(eq(maintenanceLogs.id, id));
