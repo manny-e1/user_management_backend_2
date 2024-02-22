@@ -1,22 +1,22 @@
-import { Request, Response } from 'express';
-import type { CreateUser } from '@/users/service.js';
-import * as UserService from '@/users/service.js';
-import createHttpError from 'http-errors';
-import { ERRORS } from '@/utils/errors.js';
-import { Status } from '@/db/schema.js';
+import { Request, Response } from "express";
+import type { CreateUser } from "@/users/service.js";
+import * as UserService from "@/users/service.js";
+import createHttpError from "http-errors";
+import { ERRORS } from "@/utils/errors.js";
+import { Status } from "@/db/schema.js";
 import {
   generateRandomUuid,
   hasChangedBefore,
   isExpired,
   isSameDay,
-} from '@/utils/helpers.js';
-import { createToken, getToken } from '@/tokens/service.js';
-import { message, transport } from '@/utils/send-email.js';
-import argon2 from 'argon2';
-import { logger } from '@/logger.js';
-import jwt from 'jsonwebtoken';
-import * as PasswordHistoryService from '@/password-history/service.js';
-import { getUserGroup } from '@/userGroup/service.js';
+} from "@/utils/helpers.js";
+import { createToken, getToken } from "@/tokens/service.js";
+import { message, transport } from "@/utils/send-email.js";
+import argon2 from "argon2";
+import { logger } from "@/logger.js";
+import jwt from "jsonwebtoken";
+import * as PasswordHistoryService from "@/password-history/service.js";
+import { getUserGroup } from "@/userGroup/service.js";
 
 export async function httpCreateUser(
   req: Request<{}, {}, CreateUser>,
@@ -25,13 +25,13 @@ export async function httpCreateUser(
   const { name, email, userGroup, staffId } = req.body;
   if (!name || !email || !userGroup || !staffId) {
     throw createHttpError.BadRequest(
-      'please make sure name, email, userGroup and staffId is included in the bpdy'
+      "please make sure name, email, userGroup and staffId is included in the bpdy"
     );
   }
   const result = await UserService.createUser(req.body);
   if (result.error) {
     if (
-      result.error.includes('email address') ||
+      result.error.includes("email address") ||
       result.error === ERRORS.INVALID_ID
     ) {
       throw createHttpError.BadRequest(result.error);
@@ -39,7 +39,7 @@ export async function httpCreateUser(
     throw createHttpError(result.error);
   }
   const user = result.user!;
-  const token = generateRandomUuid(190, 'base64');
+  const token = generateRandomUuid(190, "base64");
   const tok = await createToken({ token, userId: user.id });
   if (tok.error) {
     if (tok.status) {
@@ -51,10 +51,10 @@ export async function httpCreateUser(
   const msg = message({
     token,
     email: user.email,
-    subject: 'Email activation',
+    subject: "Email activation",
     name: user.name,
     reset: false,
-    userGroup: userGrp.userGroup?.name ?? '',
+    userGroup: userGrp.userGroup?.name ?? "",
   });
   transport
     .sendMail(msg)
@@ -64,7 +64,7 @@ export async function httpCreateUser(
     .catch((err) =>
       logger.error(`sending user activation email for ${email} failed`, err)
     );
-  res.status(201).json({ message: 'success' });
+  res.status(201).json({ message: "success" });
 }
 
 export async function httpGetAllUsers(req: Request, res: Response) {
@@ -85,7 +85,7 @@ export async function httpGetUser(req: Request<{ id: string }>, res: Response) {
   const result = await UserService.getUser(id);
   if (result.error) {
     if (result.error === ERRORS.NOT_FOUND) {
-      throw createHttpError.NotFound('user not found');
+      throw createHttpError.NotFound("user not found");
     }
     throw createHttpError(result.error);
   }
@@ -101,16 +101,16 @@ export async function httpLogin(
   const result = await UserService.getUserByEmail(email);
   if (result.error) {
     if (result.error === ERRORS.NOT_FOUND) {
-      throw createHttpError.NotFound('invalid credentials');
+      throw createHttpError.NotFound("invalid credentials");
     }
     throw createHttpError(result.error);
   }
 
   const user = result.user!;
 
-  if (user.status === 'locked') {
+  if (user.status === "locked") {
     throw createHttpError.Unauthorized(
-      'your account is locked, contact admin to unlock'
+      "your account is locked, contact admin to unlock"
     );
   }
 
@@ -131,14 +131,14 @@ export async function httpLogin(
     await UserService.addWrongPasswordTrial(user.id);
     await UserService.changeUserStatus({
       id: user.id!,
-      status: 'locked',
+      status: "locked",
     });
     throw createHttpError.Unauthorized(
-      'You have reached maximum invalid login and your account is locked'
+      "You have reached maximum invalid login and your account is locked"
     );
   } else if (!verify) {
     await UserService.addWrongPasswordTrial(user.id);
-    throw createHttpError.Unauthorized('invalid credentials');
+    throw createHttpError.Unauthorized("invalid credentials");
   }
 
   const token = jwt.sign(
@@ -147,9 +147,9 @@ export async function httpLogin(
     },
     process.env.SECRET_KEY
   );
-  const userAgent = req.headers['user-agent'] || '';
+  const userAgent = req.headers["user-agent"] || "";
   const loginSession = await UserService.createLoginSession({
-    ip: '',
+    ip: "",
     userAgent,
     userId: user.id,
     userRole: user.role,
@@ -178,7 +178,7 @@ export async function httpChangeUserStatus(
   const { status, email } = req.body;
 
   const result = await UserService.changeUserStatus({
-    id: 'id',
+    id: "id",
     email,
     status,
   });
@@ -190,18 +190,18 @@ export async function httpChangeUserStatus(
     }
     throw createHttpError(result.error);
   }
-  if (status === 'active') {
+  if (status === "active") {
     const result2 = await UserService.deleteWrongPassTrials(result.id!);
     if (result2.error) {
       if (result2.error === ERRORS.DELETE_FAILED) {
         throw createHttpError.NotFound(
-          'Failed to delete the user, make your the user id is valid'
+          "Failed to delete the user, make your the user id is valid"
         );
       }
       throw createHttpError(result2.error);
     }
   }
-  res.status(200).json({ message: 'success' });
+  res.status(200).json({ message: "success" });
 }
 
 export async function httpCheckUserByUserGroup(
@@ -211,7 +211,7 @@ export async function httpCheckUserByUserGroup(
   const { userGroupId } = req.query;
 
   if (!userGroupId) {
-    throw createHttpError.BadRequest('please include userGroupId in the query');
+    throw createHttpError.BadRequest("please include userGroupId in the query");
   }
   const result = await UserService.checkUserByUserGroup(userGroupId);
   if (result.error) {
@@ -231,14 +231,14 @@ export async function httpEditUser(
   if (result.error) {
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound(
-        'failed to update user, make sure the user id is correct'
+        "failed to update user, make sure the user id is correct"
       );
     } else if (result.error === ERRORS.INVALID_ID) {
       throw createHttpError.BadRequest(result.error);
     }
     throw createHttpError(result.error);
   }
-  res.json({ message: 'success' });
+  res.json({ message: "success" });
 }
 
 export async function httpActivateUser(
@@ -247,30 +247,30 @@ export async function httpActivateUser(
 ) {
   let { token } = req.query;
   if (!token) {
-    throw createHttpError.BadRequest('please include token in the query');
+    throw createHttpError.BadRequest("please include token in the query");
   }
-  token = token.replace(/\s/g, '+');
+  token = token.replace(/\s/g, "+");
   const tok = await getToken({ token });
   if (tok.error) {
     if (tok.error === ERRORS.NOT_FOUND) {
-      throw createHttpError.NotFound('token not found');
+      throw createHttpError.NotFound("token not found");
     }
     throw createHttpError(tok.error);
   }
   const expired = isExpired(tok.token?.tokenExpiry!);
   if (expired) {
     throw createHttpError.BadRequest(
-      'the token has expired, please request for a new one'
+      "the token has expired, please request for a new one"
     );
   }
   const result = await UserService.changeUserStatus({
     id: tok.token?.userId!,
-    status: 'active',
+    status: "active",
   });
   if (result.error) {
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound(
-        'failed to activate account, make your the user id is valid'
+        "failed to activate account, make your the user id is valid"
       );
     }
     throw createHttpError(result.error);
@@ -284,25 +284,25 @@ export async function httpForgotPassword(
 ) {
   const { email } = req.body;
 
-  logger.info('Forgot password request ...');
+  logger.info("Forgot password request ...");
 
   if (!email) {
     throw createHttpError.BadRequest(
-      'please include email in your request body'
+      "please include email in your request body"
     );
   }
   const result = await UserService.getUserByEmail(email);
   if (result.error) {
     if (result.error === ERRORS.NOT_FOUND) {
-      throw createHttpError.NotFound('Email not found');
+      throw createHttpError.NotFound("Email not found");
     }
     throw createHttpError(result.error);
   }
   const user = result.user!;
-  const token = generateRandomUuid(190, 'base64');
+  const token = generateRandomUuid(190, "base64");
   const tok = await createToken({ token, userId: user.id });
   if (tok.error) {
-    logger.info('Token error ...');
+    logger.info("Token error ...");
 
     if (tok.status) {
       throw createHttpError.BadRequest(tok.error);
@@ -312,12 +312,12 @@ export async function httpForgotPassword(
   const msg = message({
     email,
     token,
-    subject: 'Password Reset',
+    subject: "Password Reset",
     name: user.name,
     reset: true,
     userGroup: user.userGroup,
   });
-  logger.info('transport email ...');
+  logger.info("transport email ...");
   transport
     .sendMail(msg)
     .then((_) => logger.info(`reset password set to user with email ${email}`))
@@ -325,35 +325,35 @@ export async function httpForgotPassword(
       logger.error(`sending reset password email for ${email} failed`, err)
     );
 
-  res.json({ message: 'success' });
+  res.json({ message: "success" });
 }
 
 export async function httpCheckResetPasswordToken(
-  req: Request<{}, {}, {}, { token: string; src?: 'activate' }>,
+  req: Request<{}, {}, {}, { token: string; src?: "activate" }>,
   res: Response
 ) {
   let { token, src } = req.query;
   if (!token) {
-    throw createHttpError.BadRequest('Please include token in the query');
+    throw createHttpError.BadRequest("Please include token in the query");
   }
-  token = token.replace(/\s/g, '+');
+  token = token.replace(/\s/g, "+");
   const tok = await getToken({ token });
   if (tok.error) {
     if (tok.error === ERRORS.NOT_FOUND) {
-      throw createHttpError.NotFound('Token not found');
+      throw createHttpError.NotFound("Token not found");
     }
     throw createHttpError(tok.error);
   }
   const expired = isExpired(tok.token?.tokenExpiry!);
   if (expired) {
     throw createHttpError.BadRequest(
-      'The token has expired, please request for a new one'
+      "The token has expired, please request for a new one"
     );
   }
 
-  if (src && src === 'activate' && tok.token?.status === 'active') {
+  if (src && src === "activate" && tok.token?.status === "active") {
     throw createHttpError.BadRequest(
-      'Your account is already activated. Please login to your account'
+      "Your account is already activated. Please login to your account"
     );
   }
   res.json({ user: { id: tok.token?.userId } });
@@ -366,7 +366,7 @@ export async function httpCheckCurrrentPassword(
   const { id, password } = req.body;
   if (!password || !id) {
     throw createHttpError.BadRequest(
-      'Please include password and id in the request body'
+      "Please include password and id in the request body"
     );
   }
   const result = await UserService.getUser(id, true);
@@ -380,17 +380,17 @@ export async function httpCheckCurrrentPassword(
 
   const verify = await argon2.verify(lastPassword as string, password);
   if (verify) {
-    return res.status(200).json({ message: 'success' });
+    return res.status(200).json({ message: "success" });
   }
-  throw createHttpError.BadRequest('Invalid current password');
+  throw createHttpError.BadRequest("Invalid current password");
 }
 
 export async function httpResetPassword(
-  req: Request<{}, {}, { password: string; id?: string; src?: 'activate' }>,
+  req: Request<{}, {}, { password: string; id?: string; src?: "activate" }>,
   res: Response
 ) {
   const { password, id, src } = req.body;
-  const userId = id ?? req.app.get('user').id;
+  const userId = id ?? req.app.get("user").id;
   const result = await PasswordHistoryService.getPasswordHistory(userId);
   if (result.error) {
     if (result.error === ERRORS.INVALID_ID) {
@@ -403,15 +403,15 @@ export async function httpResetPassword(
 
   if (changedBefore) {
     throw createHttpError.BadRequest(
-      'You can’t reuse old password. Please enter new password'
+      "You can’t reuse old password. Please enter new password"
     );
   }
 
-  if (src !== 'activate') {
+  if (src !== "activate") {
     let todayChangeCount = 0;
     const today = new Date();
     pwdHistory
-      .filter((pwd) => pwd.source === 'reset')
+      .filter((pwd) => pwd.source === "reset")
       .forEach((history) => {
         if (isSameDay(today, history.createdAt)) {
           todayChangeCount++;
@@ -420,20 +420,20 @@ export async function httpResetPassword(
 
     if (todayChangeCount >= 2) {
       throw createHttpError.BadRequest(
-        'You’ve exceeded the number of times you can update your password per day. Please try again tomorrow'
+        "You’ve exceeded the number of times you can update your password per day. Please try again tomorrow"
       );
     }
   }
 
-  if (src && src === 'activate') {
+  if (src && src === "activate") {
     const result = await UserService.changeUserStatus({
       id: userId,
-      status: 'active',
+      status: "active",
     });
     if (result.error) {
       if (result.error === ERRORS.UPDATE_FAILED) {
         throw createHttpError.NotFound(
-          'failed to activate account, make your the user id is valid'
+          "failed to activate account, make your the user id is valid"
         );
       }
       throw createHttpError(result.error);
@@ -444,7 +444,7 @@ export async function httpResetPassword(
   const addPwdResult = await PasswordHistoryService.addToPasswordHistory({
     userId,
     password: hashedPassword,
-    source: src === 'activate' ? 'activation' : 'reset',
+    source: src === "activate" ? "activation" : "reset",
   });
   if (addPwdResult.error) {
     throw createHttpError.InternalServerError(addPwdResult.error);
@@ -456,7 +456,7 @@ export async function httpResetPassword(
   });
   if (resetPwdResult.error) {
     if (resetPwdResult.error === ERRORS.NOT_FOUND) {
-      throw createHttpError.NotFound('user not found');
+      throw createHttpError.NotFound("user not found");
     }
     throw createHttpError(resetPwdResult.error);
   }
@@ -472,7 +472,7 @@ export async function httpDeleteUser(
   if (result.error) {
     if (result.error === ERRORS.DELETE_FAILED) {
       throw createHttpError.NotFound(
-        'Failed to delete the user, make your the user id is valid'
+        "Failed to delete the user, make your the user id is valid"
       );
     }
     throw createHttpError(result.error);
@@ -489,11 +489,11 @@ export async function httpLogoutUser(
   //   (req.headers['x-forwarded-for'] as string) ||
   //   req.socket.remoteAddress ||
   //   '';
-  const userAgent = req.headers['user-agent'] || '';
+  const userAgent = req.headers["user-agent"] || "";
   const result = await UserService.logoutUser({ id, userAgent });
   if (result.error) {
     if (result.error === ERRORS.UPDATE_FAILED) {
-      throw createHttpError.NotFound('Failed to logout the user');
+      throw createHttpError.NotFound("Failed to logout the user");
     }
     throw createHttpError(result.error);
   }
