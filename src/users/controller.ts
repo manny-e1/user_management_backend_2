@@ -420,7 +420,7 @@ export async function httpResetPassword(
 
     if (todayChangeCount >= 2) {
       throw createHttpError.BadRequest(
-        "You’ve exceeded the number of times you can update your password per day. Please try again tomorrow"
+        "You’ve exceeded the number of times password update per day. Please try again tomorrow"
       );
     }
   }
