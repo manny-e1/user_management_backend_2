@@ -155,6 +155,8 @@ export const maintenanceLogs = pgTable('maintenance_logs', {
   submittedBy: varchar('submittedBy').default('').notNull(),
   startDate: timestamp('startDate').notNull(),
   endDate: timestamp('endDate').notNull(),
+  extendedStartDate: timestamp('extended_start_date'),
+  extendedEndDate: timestamp('extended_end_date'),
   iRakyatYN: boolean('iRakyatYN').default(false).notNull(),
   iBizRakyatYN: boolean('iBizRakyatYN').default(false).notNull(),
   iRakyatStatus: varchar('iRakyatStatus').default('').notNull(),

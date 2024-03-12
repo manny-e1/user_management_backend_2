@@ -104,6 +104,10 @@ export async function isNormalUser1OrManager1(
   _: Response,
   next: NextFunction
 ) {
+  if (!req.user) {
+    next();
+    return;
+  }
   if (req.user?.role !== 'normal user 1' && req.user?.role !== 'manager 1')
     throw createHttpError.Forbidden();
   next();
@@ -114,6 +118,10 @@ export async function isNormalUser2OrManager2(
   _: Response,
   next: NextFunction
 ) {
+  if (!req.user) {
+    next();
+    return;
+  }
   if (req.user?.role !== 'normal user 2' && req.user?.role !== 'manager 2')
     throw createHttpError.Forbidden();
   next();

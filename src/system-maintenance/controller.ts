@@ -25,8 +25,10 @@ export async function httpCreateMntLogs(
   >,
   res: Response
 ) {
-  const mntLogs: (NewMaintenanceLog & { createdAt: Date; updatedAt: Date })[] =
-    [];
+  const mntLogs: (Omit<
+    NewMaintenanceLog,
+    'extendedStartDate' | 'extendedEndDate'
+  > & { createdAt: Date; updatedAt: Date })[] = [];
 
   req.body.map((item) => {
     const { startDate, endDate, iRakyatYN, iBizRakyatYN, submittedBy } = item;
@@ -109,9 +111,9 @@ export async function httpUpdateMntLog(
   const { id } = req.params;
   const body = req.body;
   const { startDate, endDate, iRakyatYN, iBizRakyatYN, submittedBy } = body;
-  const mntLog: NewMaintenanceLog = {
-    startDate: new Date(startDate),
-    endDate: new Date(endDate),
+  const mntLog: Omit<NewMaintenanceLog, 'startDate' | 'endDate'> = {
+    extendedStartDate: new Date(startDate),
+    extendedEndDate: new Date(endDate),
     iRakyatYN: iRakyatYN,
     iBizRakyatYN: iBizRakyatYN,
     submittedBy: submittedBy,

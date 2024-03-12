@@ -9,7 +9,10 @@ import { ERRORS } from '@/utils/errors.js';
 import { desc, eq, inArray, sql, and } from 'drizzle-orm';
 
 export async function createMntLogs(
-  body: (NewMaintenanceLog & { createdAt: Date; updatedAt: Date })[]
+  body: (Omit<NewMaintenanceLog, 'extendedStartDate' | 'extendedEndDate'> & {
+    createdAt: Date;
+    updatedAt: Date;
+  })[]
 ) {
   try {
     await db.insert(maintenanceLogs).values(body);
@@ -33,6 +36,8 @@ export async function getMntLogs(paymentSite: boolean) {
     iBizRakyatStatus: maintenanceLogs.iBizRakyatStatus,
     submissionStatus: maintenanceLogs.submissionStatus,
     approvalStatus: maintenanceLogs.approvalStatus,
+    extendedStartDate: maintenanceLogs.extendedStartDate,
+    extendedEndDate: maintenanceLogs.extendedEndDate,
   };
 
   const { submittedBy: _, ...forB2C } = fullObj;
@@ -100,7 +105,7 @@ export async function getMntLog(id: string) {
         mntLog: {
           ...mntLog,
           iRakyatStatus: mntLog.iRakyatYN ? 'C' : '',
-          iBizRakyatStatus: mntLog.iBizRakyatYN ? 'C' : ''
+          iBizRakyatStatus: mntLog.iBizRakyatYN ? 'C' : '',
         },
       };
     } else {
@@ -116,7 +121,10 @@ export async function getMntLog(id: string) {
   }
 }
 
-export async function updateMntLog(id: string, data: NewMaintenanceLog) {
+export async function updateMntLog(
+  id: string,
+  data: Omit<NewMaintenanceLog, 'startDate' | 'endDate'>
+) {
   try {
     await db
       .update(maintenanceLogs)
@@ -168,18 +176,20 @@ export async function approveMntLogs(ids: string[], email: string) {
         updatedAt: new Date(),
         approvedBy: email,
         approvalStatus: 'Approved',
+        startDate: sql`CASE WHEN "extended_start_date" IS NOT NULL THEN extended_start_date ELSE "startDate" END`,
+        endDate: sql`CASE WHEN "extended_end_date" IS NOT NULL THEN extended_end_date ELSE "endDate" END`,
+        extendedEndDate: null,
+        extendedStartDate: null,
         iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "iRakyatStatus" != 'C' THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iRakyatYN" IS FALSE THEN '' ELSE "iRakyatStatus" END) END`,
         iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "iBizRakyatStatus"!='C' THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iBizRakyatYN" IS FALSE THEN '' ELSE "iBizRakyatStatus" END) END`,
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
         iRakyatCN: false,
-        iBizRakyatCN: false
+        iBizRakyatCN: false,
       })
       .where(inArray(maintenanceLogs.id, ids));
 
-    await db
-      .delete(maintenanceLogs)
-      .where(eq(maintenanceLogs.isDeleted, true));
-      
+    await db.delete(maintenanceLogs).where(eq(maintenanceLogs.isDeleted, true));
+
     return { message: 'success' };
   } catch (error) {
     logger.error(error);
@@ -197,10 +207,12 @@ export async function rejectMntLogs(ids: string[], email: string, msg: string) {
         approvalStatus: 'Rejected',
         iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'A' ELSE "iRakyatStatus" END) ELSE '' END`,
         iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'A' ELSE "iBizRakyatStatus" END) ELSE '' END`,
+        extendedStartDate: null,
+        extendedEndDate: null,
         approvedBy: email,
         rejectReason: msg,
         iRakyatCN: false,
-        iBizRakyatCN: false
+        iBizRakyatCN: false,
       })
       .where(inArray(maintenanceLogs.id, ids));
 
@@ -233,13 +245,13 @@ export async function completeMntLogs(id: string, channel: string) {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
               submittedAt: new Date(),
-              iRakyatCN: true
+              iRakyatCN: true,
             }
           : {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
               submittedAt: new Date(),
-              iBizRakyatCN: true
+              iBizRakyatCN: true,
             }
       )
       .where(eq(maintenanceLogs.id, id));
