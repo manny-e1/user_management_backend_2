@@ -50,14 +50,7 @@ export async function getMntLogs(paymentSite: boolean) {
 
     const now = new Date().toISOString();
 
-    const data = mntLogs.map((logItem, index: number) => {
-      const item = {...logItem};
-
-      if (item.startDate.toISOString() > now) {
-        item.iRakyatStatus = '';
-        item.iBizRakyatStatus = '';
-      }
-
+    const data = mntLogs.map((item, index: number) => {
       if (
         item.endDate.toISOString() < now
         // &&item.approvalStatus == 'Approved'
@@ -187,7 +180,7 @@ export async function approveMntLogs(ids: string[], email: string) {
         endDate: sql`CASE WHEN "extended_end_date" IS NOT NULL THEN extended_end_date ELSE "endDate" END`,
         extendedEndDate: null,
         extendedStartDate: null,
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "iRakyatStatus" != 'C' THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iRakyatYN" IS FALSE THEN '' ELSE "iRakyatStatus" END) END`,
+       iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "iRakyatStatus" != 'C' THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iRakyatYN" IS FALSE THEN '' ELSE "iRakyatStatus" END) END`,
         iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "iBizRakyatStatus"!='C' THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iBizRakyatYN" IS FALSE THEN '' ELSE "iBizRakyatStatus" END) END`,
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
         iRakyatCN: false,
