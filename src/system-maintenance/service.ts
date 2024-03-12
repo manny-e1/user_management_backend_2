@@ -51,6 +51,12 @@ export async function getMntLogs(paymentSite: boolean) {
     const now = new Date().toISOString();
 
     const data = mntLogs.map((item, index: number) => {
+
+      if (item.startDate.toISOString() > now) {
+        item.iRakyatStatus = '';
+        item.iBizRakyatStatus = '';
+      }
+
       if (
         item.endDate.toISOString() < now
         // &&item.approvalStatus == 'Approved'
