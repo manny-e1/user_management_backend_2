@@ -39,6 +39,7 @@ export async function getMntLogs(paymentSite: boolean) {
     extendedStartDate: maintenanceLogs.extendedStartDate,
     extendedEndDate: maintenanceLogs.extendedEndDate,
     approvedBy:maintenanceLogs.approvedBy,
+    rejectReason:maintenanceLogs.rejectReason,
   };
 
   const { submittedBy: _, ...forB2C } = fullObj;
@@ -65,8 +66,8 @@ export async function getMntLogs(paymentSite: boolean) {
         return {
           ...item,
           mid: index + 1,
-          iRakyatStatus: item.iRakyatYN && item.approvedBy !='' && item.extendedStartDate !=null && item.approvalStatus !='Rejected' ? 'C' : '',
-          iBizRakyatStatus: item.iBizRakyatYN && item.approvedBy !='' && item.extendedStartDate !=null && item.approvalStatus !='Rejected' ? 'C' : '',
+          iRakyatStatus: item.iRakyatYN && item.approvedBy !='' && item.rejectReason !='' ? 'C' : '',
+          iBizRakyatStatus: item.iBizRakyatYN && item.approvedBy !='' && item.rejectReason !='' ? 'C' : '',
         };
       } else if (
         item.approvalStatus == 'Rejected' &&
