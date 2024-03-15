@@ -66,8 +66,8 @@ export async function getMntLogs(paymentSite: boolean) {
         return {
           ...item,
           mid: index + 1,
-          iRakyatStatus: item.iRakyatYN && item.approvedBy !='' && item.rejectReason =='' ? 'C' : '',
-          iBizRakyatStatus: item.iBizRakyatYN && item.approvedBy !='' && item.rejectReason =='' ? 'C' : '',
+          iRakyatStatus: item.iRakyatYN && item.approvedBy !='' ? 'C' : '',
+          iBizRakyatStatus: item.iBizRakyatYN && item.approvedBy !='' ? 'C' : '',
         };
       } else if (
         item.approvalStatus == 'Rejected' &&
