@@ -138,8 +138,8 @@ export async function updateMntLog(
         ...data,
         submissionStatus: 'Edited',
         approvalStatus: 'Pending',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND approvalStatus = 'Approved' THEN (CASE WHEN "iRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND approvalStatus = 'Approved' THEN (CASE WHEN "iBizRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "approvalStatus" = 'Approved' THEN (CASE WHEN "iRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "approvalStatus" = 'Approved' THEN (CASE WHEN "iBizRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
         submittedAt: new Date(),
         updatedAt: new Date(),
       })
