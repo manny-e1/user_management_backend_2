@@ -38,6 +38,7 @@ export async function getMntLogs(paymentSite: boolean) {
     approvalStatus: maintenanceLogs.approvalStatus,
     extendedStartDate: maintenanceLogs.extendedStartDate,
     extendedEndDate: maintenanceLogs.extendedEndDate,
+    approvedBy:maintenanceLogs.approvedBy,
   };
 
   const { submittedBy: _, ...forB2C } = fullObj;
@@ -64,8 +65,8 @@ export async function getMntLogs(paymentSite: boolean) {
         return {
           ...item,
           mid: index + 1,
-          iRakyatStatus: item.iRakyatYN && item.approvalStatus=='Approved' ? 'C' : '',
-          iBizRakyatStatus: item.iBizRakyatYN && item.approvalStatus=='Approved' ? 'C' : '',
+          iRakyatStatus: item.iRakyatYN && item.approvedBy !='' ? 'C' : '',
+          iBizRakyatStatus: item.iBizRakyatYN && item.approvedBy !='' ? 'C' : '',
         };
       } else if (
         item.approvalStatus == 'Rejected' &&
