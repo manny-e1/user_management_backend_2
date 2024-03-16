@@ -40,6 +40,7 @@ export async function getMntLogs(paymentSite: boolean) {
     extendedEndDate: maintenanceLogs.extendedEndDate,
     approvedBy:maintenanceLogs.approvedBy,
     rejectReason:maintenanceLogs.rejectReason,
+    isDeleted:maintenanceLogs.isDeleted,
   };
 
   const { submittedBy: _, ...forB2C } = fullObj;
