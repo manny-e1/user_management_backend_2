@@ -26,11 +26,13 @@ const message = ({
   const pwdReset = resetPasswordEmailTemplate({
     link: `${process.env.FRONT_END_URL}/change-password?token=${token}`,
     name,
+    email,
   });
 
   const accActivation = activationEmailTemplate({
     link: `${process.env.FRONT_END_URL}/set-password?token=${token}`,
     name,
+    email,
     userGroup,
   });
   return {

@@ -61,16 +61,9 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 const domains = [
-  'http://54.254.130.92:3000',
-  'http://13.229.106.122:3001',
-  'http://13.229.106.122:3000',
-  'http://20.205.146.121:3002',
-  'http://rppnew.bankrakyat.com.my:3002',
-  'http://20.205.146.121:3001',
-  '196.191.190.114',
-  'http://196.191.190.114:3000',
-  'https://payment.bkrm.pro',
-  'https://admin.bkrm.pro',
+  'https://20.205.146.121:3008',
+  'https://rppnew.bankrakyat.com.my:3008',
+  'https://rppnew.bankrakyat.com.my:3003',
   'http://127.0.0.1:3000',
   'http://localhost:3000',
   'http://localhost:3001',
