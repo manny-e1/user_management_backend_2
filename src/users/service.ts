@@ -192,6 +192,7 @@ export async function getUserByEmail(email: string) {
         password: users.password,
         email: users.email,
         userGroup: users.userGroup,
+        userGroupName: userGroups.name,
         staffId: users.staffId,
         role: roles.role,
         status: users.status,
