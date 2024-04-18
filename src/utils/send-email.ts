@@ -76,16 +76,20 @@ const transport = nodemailer.createTransport({
     process.env.NODE_ENV === 'development'
       ? Number(process.env.EMAIL_PORT_LOCAL)
       : Number(process.env.EMAIL_PORT),
-  auth: {
-    user:
-      process.env.NODE_ENV === 'development'
-        ? process.env.EMAIL_USER_LOCAL
-        : process.env.EMAIL_USER,
-    pass:
-      process.env.NODE_ENV === 'development'
-        ? process.env.EMAIL_PASS_LOCAL
-        : process.env.EMAIL_PASS,
-  },
+  secure: false, 
+  // auth: {
+  //   user:
+  //     process.env.NODE_ENV === 'development'
+  //       ? process.env.EMAIL_USER_LOCAL
+  //       : process.env.EMAIL_USER,
+  //   pass:
+  //     process.env.NODE_ENV === 'development'
+  //       ? process.env.EMAIL_PASS_LOCAL
+  //       : process.env.EMAIL_PASS,
+  // },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 export { transport, message };
