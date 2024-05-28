@@ -51,17 +51,36 @@ export async function isAuthenticated(
   }
 }
 
-export async function isAdmin(req: Request, _: Response, next: NextFunction) {
-  if (req.user?.role !== 'admin') throw createHttpError.Forbidden();
-  next();
-}
-
-export async function isAdminOrAdmin2(
+export async function isAdminOrAdmin4(
   req: Request,
   _: Response,
   next: NextFunction
 ) {
-  if (req.user?.role !== 'admin' && req.user?.role !== 'admin 2')
+  if (req.user?.role !== 'admin' && req.user?.role !== 'admin 4')
+    throw createHttpError.Forbidden();
+  next();
+}
+
+export async function isAdmin3OrAdmin4(
+  req: Request,
+  _: Response,
+  next: NextFunction
+) {
+  if (req.user?.role !== 'admin 3' && req.user?.role !== 'admin 4')
+    throw createHttpError.Forbidden();
+  next();
+}
+
+export async function isAdminOrAdmin2OrAdmin4(
+  req: Request,
+  _: Response,
+  next: NextFunction
+) {
+  if (
+    req.user?.role !== 'admin' &&
+    req.user?.role !== 'admin 2' &&
+    req.user?.role !== 'admin 4'
+  )
     throw createHttpError.Forbidden();
   next();
 }

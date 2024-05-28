@@ -15,14 +15,24 @@ import {
 } from 'drizzle-orm/pg-core';
 
 //roles
-export const roleEnum = pgEnum('role', [
+export const roleValues = [
   'admin',
   'admin 2',
+  'admin 3',
+  'admin 4',
   'normal user 1',
   'normal user 2',
+  'normal user 3',
+  'normal user 4',
+  'normal user 5',
   'manager 1',
   'manager 2',
-]);
+  'manager 3',
+  'manager 4',
+  'manager 5',
+] as const;
+
+export const roleEnum = pgEnum('role', roleValues);
 
 //login_sessions
 export const loginSessionEnum = pgEnum('login_session', ['active', 'expired']);
@@ -64,7 +74,7 @@ export const userGroups = pgTable(
 export type UserGroups = InferModel<typeof userGroups>;
 
 //users
-export const statusEnum = pgEnum('status', ['locked', 'active']);
+export const statusEnum = pgEnum('status', ['locked', 'active', 'inactive']);
 
 export const users = pgTable(
   'users',
@@ -74,7 +84,7 @@ export const users = pgTable(
     email: varchar('email', { length: 256 }).notNull(),
     password: varchar('password', { length: 256 }),
     staffId: varchar('staff_id', { length: 256 }).notNull(),
-    status: statusEnum('status').default('locked').notNull(),
+    status: statusEnum('status').default('inactive').notNull(),
     userGroup: uuid('user_group_id')
       .references(() => userGroups.id)
       .notNull(),

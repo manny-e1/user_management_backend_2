@@ -7,7 +7,7 @@
   "scripts": {
     "start": "tsx -r dotenv/config src/index.ts",
     "pm2": "pm2 start --interpreter ./node_modules/.bin/tsx --name='user-management-2' src/index.ts",
-    "dev": "tsx watch -r dotenv/config src/index.ts",
+    "dev": "tsx --watch -r dotenv/config src/index.ts",
     "migrate": "drizzle-kit generate:pg --config=drizzle.config.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,6 +21,7 @@
     "@types/node": "^20.3.3",
     "@types/nodemailer": "^6.4.8",
     "@types/pg": "^8.10.2",
+    "@types/validator": "^13.11.10",
     "drizzle-kit": "^0.18.1",
     "tsx": "^3.12.7"
   },
@@ -37,6 +38,7 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.3",
     "pg": "^8.11.1",
+    "validator": "^13.12.0",
     "winston": "^3.9.0",
     "zod": "^3.22.4"
   }

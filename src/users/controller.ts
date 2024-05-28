@@ -17,6 +17,7 @@ import { logger } from '@/logger.js';
 import jwt from 'jsonwebtoken';
 import * as PasswordHistoryService from '@/password-history/service.js';
 import { getUserGroup } from '@/userGroup/service.js';
+import { Email } from './types.js';
 
 export async function httpCreateUser(
   req: Request<{}, {}, CreateUser>,
@@ -278,6 +279,49 @@ export async function httpActivateUser(
   res.json(result);
 }
 
+export async function httpResendAcctivationEmail(
+  req: Request<{}, {}, Email>,
+  res: Response
+) {
+  const { email } = req.body;
+  const result = await UserService.getUserByEmail(email);
+  if (result.error) {
+    if (result.error === ERRORS.NOT_FOUND) {
+      throw createHttpError.NotFound('user not found');
+    }
+    throw createHttpError.InternalServerError(result.error);
+  }
+  const user = result.user!;
+  if (user.status === 'active') {
+    throw createHttpError.BadRequest('user is already activated');
+  }
+  const token = generateRandomUuid(190, 'base64');
+  const tok = await createToken({ token, userId: user.id });
+  if (tok.error) {
+    if (tok.status) {
+      throw createHttpError.BadRequest(tok.error);
+    }
+    throw createHttpError(tok.error);
+  }
+  const msg = message({
+    token,
+    email: user.email,
+    subject: 'Email activation',
+    name: user.name,
+    reset: false,
+    userGroup: user.userGroupName || '',
+  });
+  transport
+    .sendMail(msg)
+    .then((_) =>
+      logger.info(`user activation email sent to user with address ${email}`)
+    )
+    .catch((err) =>
+      logger.error(`sending user activation email for ${email} failed`, err)
+    );
+  res.json({ message: 'success' });
+}
+
 export async function httpForgotPassword(
   req: Request<{}, {}, { email: string; activate?: boolean }>,
   res: Response
@@ -320,9 +364,20 @@ export async function httpForgotPassword(
   logger.info('transport email ...');
   transport
     .sendMail(msg)
-    .then((_) => logger.info(`reset password set to user with email ${email}`))
+    .then((_) =>
+      logger.info(
+        `${
+          activate ? 'activation' : 'reset password'
+        } email sent to user with email ${email}`
+      )
+    )
     .catch((err) =>
-      logger.error(`sending reset password email for ${email} failed`, err)
+      logger.error(
+        `sending ${
+          activate ? 'activation' : 'reset password'
+        } email for ${email} failed`,
+        err
+      )
     );
 
   res.json({ message: 'success' });

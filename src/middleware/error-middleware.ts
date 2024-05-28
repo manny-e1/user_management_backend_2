@@ -1,6 +1,48 @@
 import { Request, NextFunction, Response } from 'express';
 import createError, { HttpError } from 'http-errors';
-import { IsJsonString } from '../utils/helpers.js';
+import { IsJsonString, sanitizeValues } from '../utils/helpers.js';
+import { ZodError, z } from 'zod';
+
+interface RequestValidators {
+  params?: z.AnyZodObject;
+  body?: z.AnyZodObject;
+  query?: z.AnyZodObject;
+}
+class ZodErrorResponse {
+  constructor(public message: any) {}
+}
+
+export function validateRequest(validators: RequestValidators) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (validators.params) {
+        const sanitizedParams = sanitizeValues(req.params);
+        req.params = await validators.params.parseAsync(sanitizedParams);
+      }
+      if (validators.body) {
+        const sanitizedBody = sanitizeValues(req.body);
+        req.body = await validators.body.parseAsync(sanitizedBody);
+      }
+      if (validators.query) {
+        const sanitizedQuery = sanitizeValues(req.query);
+        req.query = await validators.query.parseAsync(sanitizedQuery);
+      }
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errors = error.errors.map((error) => {
+          const errObj: Record<string | number, string> = {};
+          errObj[error.path[0]] = error.message;
+          return errObj;
+        });
+        res.status(422);
+        next(new ZodErrorResponse(errors));
+      } else {
+        next(error);
+      }
+    }
+  };
+}
 
 export interface ParamsDictionary {
   [key: string]: string;
