@@ -12,6 +12,7 @@ import {
   boolean,
   doublePrecision,
   text,
+  char,
 } from 'drizzle-orm/pg-core';
 
 //roles
@@ -237,3 +238,30 @@ export const loginSessions = pgTable('login_sessions', {
 });
 
 export type LoginSession = InferModel<typeof loginSessions>;
+
+//mfa config
+export const mfaStatusEnum = pgEnum('mfa_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+export const mfaConfigs = pgTable('mfa_configs', {
+  id: uuid('id').defaultRandom().notNull().primaryKey(),
+  cSMS: integer('c_sms').notNull(),
+  cMO: integer('c_mo').notNull(),
+  cMA: integer('c_ma').notNull(),
+  nSMS: integer('n_sms').notNull(),
+  nMO: integer('n_mo').notNull(),
+  nMA: integer('n_ma').notNull(),
+  status: mfaStatusEnum('status').notNull().default('pending'),
+  maker: uuid('maker')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  checker: uuid('checker').references(() => users.id, { onDelete: 'cascade' }),
+  reason: varchar('reason'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  actionTakenTime: timestamp('action_taken_time'),
+});
+
+export type MFAConfig = InferModel<typeof mfaConfigs>;

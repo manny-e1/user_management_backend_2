@@ -20,6 +20,7 @@ import { ENVOBJ } from './utils/common-types.js';
 import { ZodError } from 'zod';
 import { Role, roleValues, roles } from './db/schema.js';
 import { db } from './db/index.js';
+import { mfaConfigRouter } from './mfa-config/route.js';
 
 declare global {
   namespace Express {
@@ -131,7 +132,7 @@ app.use('/api/roles', roleRouter);
 app.use('/api/transactions', transactionLogRouter);
 app.use('/api/maintenance', maintenanceLogRouter);
 app.use('/api/password-histories', passwordHistoryRouter);
-
+app.use('/api/mfa-configs', mfaConfigRouter);
 app.use(notFound);
 app.use(errorHandler);
 
