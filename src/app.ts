@@ -133,6 +133,9 @@ app.use('/api/transactions', transactionLogRouter);
 app.use('/api/maintenance', maintenanceLogRouter);
 app.use('/api/password-histories', passwordHistoryRouter);
 app.use('/api/mfa-configs', mfaConfigRouter);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use(notFound);
 app.use(errorHandler);
 
