@@ -21,6 +21,7 @@ import { ZodError } from 'zod';
 import { Role, roleValues, roles } from './db/schema.js';
 import { db } from './db/index.js';
 import { mfaConfigRouter } from './mfa-config/route.js';
+import { iSecureNoteRouter } from './isecure-notes/route.js';
 
 declare global {
   namespace Express {
@@ -84,7 +85,13 @@ const domainsToUse =
     ? domains
     : domains.slice(0, domains.length - 5);
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: 'cross-origin',
+    },
+  })
+);
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -101,8 +108,17 @@ app.use(
     },
   })
 );
-
+app.disable('x-powered-by');
+app.use(
+  helmet.hsts({
+    maxAge: 31536000, // 1 year in seconds
+    includeSubDomains: true,
+    preload: true,
+  })
+);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// app.use(express.raw({ type: () => true }));
 
 // app.use((req, res, next) => {
 //   let address =
@@ -133,6 +149,7 @@ app.use('/api/transactions', transactionLogRouter);
 app.use('/api/maintenance', maintenanceLogRouter);
 app.use('/api/password-histories', passwordHistoryRouter);
 app.use('/api/mfa-configs', mfaConfigRouter);
+app.use('/api/isecure-notes', iSecureNoteRouter);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

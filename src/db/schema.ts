@@ -265,3 +265,34 @@ export const mfaConfigs = pgTable('mfa_configs', {
 });
 
 export type MFAConfig = InferModel<typeof mfaConfigs>;
+
+// i-secure notes
+export const isecureNotes = pgTable('isecure_notes', {
+  id: uuid('id').defaultRandom().notNull().primaryKey(),
+  cDisplayStatus: char('c_display_status', {
+    length: 3,
+    enum: ['on', 'off'],
+  }).notNull(),
+  nDisplayStatus: char('n_display_status', {
+    length: 3,
+    enum: ['on', 'off'],
+  }).notNull(),
+  status: mfaStatusEnum('status').notNull().default('pending'),
+  maker: uuid('maker')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  image: text('image').notNull(),
+  imageUpdated: char('image_updated', {
+    length: 1,
+    enum: ['Y', 'N'],
+  })
+    .notNull()
+    .default('N'),
+  checker: uuid('checker').references(() => users.id, { onDelete: 'cascade' }),
+  reason: varchar('reason'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  actionTakenTime: timestamp('action_taken_time'),
+});
+
+export type ISecureNote = InferModel<typeof isecureNotes>;
