@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { changeLastPwdDate, checkPasswordValidity } from './service.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import createHttpError from 'http-errors';
 import { isMoreThan60DaysAfter } from '@/utils/helpers.js';
 import { getUserByEmail } from '@/users/service.js';

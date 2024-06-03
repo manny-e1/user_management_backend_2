@@ -1,21 +1,29 @@
 import { db } from '@/db/index.js';
-import { passwordHistory } from '@/db/schema.js';
+import { Sources, passwordHistory } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { desc, eq } from 'drizzle-orm';
 
 export async function addToPasswordHistory({
   userId,
   password,
+  source,
 }: {
   userId: string;
   password: string;
+  source: Sources;
 }) {
   try {
-    await db.insert(passwordHistory).values({ userId, password });
+    const result = await db
+      .insert(passwordHistory)
+      .values({ userId, password, source });
+    if (!(result.rowCount > 0)) {
+      return { error: 'failed to add password' };
+    }
     return { message: 'success' };
   } catch (error) {
     logger.error(error);
+    return { error: (error as Error).message };
   }
 }
 

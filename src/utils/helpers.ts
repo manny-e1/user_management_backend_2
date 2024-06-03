@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { URLSearchParams } from 'node:url';
 import { PasswordHistory } from '@/db/schema.js';
 import argon2 from 'argon2';
+import validator from 'validator';
 
 export function IsJsonString(str: string) {
   try {
@@ -74,4 +75,36 @@ export async function hasChangedBefore(
     }
   }
   return hasChangedBefore;
+}
+
+export function sanitizeValues(obj: Record<string, any>) {
+  const sanitizedValues: Record<string, any> = {};
+  Object.entries(obj).forEach((obj) => {
+    if (obj !== undefined && obj !== null) {
+      const key = obj[0];
+      const value = obj[1];
+      if (typeof value === 'object') {
+        if (Array.isArray(value)) {
+          const sanitizedArray = value.map((v) => {
+            if (typeof v === 'string') {
+              return validator.escape(v).replace('&#x2F;', '/');
+            } else if (typeof v === 'object') {
+              return sanitizeValues(v);
+            } else {
+              return v;
+            }
+          });
+          sanitizedValues[key] = sanitizedArray;
+        } else {
+          sanitizedValues[key] = sanitizeValues(value);
+        }
+      } else if (typeof value === 'string') {
+        const sanitizedValue = validator.escape(value).replace('&#x2F;', '/');
+        sanitizedValues[key] = sanitizedValue;
+      } else {
+        sanitizedValues[key] = value;
+      }
+    }
+  });
+  return sanitizedValues;
 }

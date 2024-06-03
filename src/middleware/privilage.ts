@@ -32,15 +32,11 @@ export async function isAuthenticated(
     if (!parsedToken.success) {
       throw createHttpError.Unauthorized();
     }
-    const ip =
-      (req.headers['x-forwarded-for'] as string) ||
-      req.socket.remoteAddress ||
-      '';
     const userAgent = req.headers['user-agent'] || '';
     const result = await getLoginSession({
-      ip,
       userAgent,
       userId: parsedToken.data.id,
+      sessionToken: token,
     });
     if (result.error) {
       throw createHttpError.Unauthorized();
@@ -48,24 +44,44 @@ export async function isAuthenticated(
     req.user = {
       id: result.loginSession?.userId,
       role: result.loginSession?.userRole,
+      email: result.loginSession?.userEmail,
     };
     next();
   } catch (error) {
-    throw new Error((error as Error).message);
+    throw createHttpError.Unauthorized((error as Error).message);
   }
 }
 
-export async function isAdmin(req: Request, _: Response, next: NextFunction) {
-  if (req.user?.role !== 'admin') throw createHttpError.Forbidden();
-  next();
-}
-
-export async function isAdminOrAdmin2(
+export async function isAdminOrAdmin4(
   req: Request,
   _: Response,
   next: NextFunction
 ) {
-  if (req.user?.role !== 'admin' && req.user?.role !== 'admin 2')
+  if (req.user?.role !== 'admin' && req.user?.role !== 'admin 4')
+    throw createHttpError.Forbidden();
+  next();
+}
+
+export async function isAdmin3OrAdmin4(
+  req: Request,
+  _: Response,
+  next: NextFunction
+) {
+  if (req.user?.role !== 'admin 3' && req.user?.role !== 'admin 4')
+    throw createHttpError.Forbidden();
+  next();
+}
+
+export async function isAdminOrAdmin2OrAdmin4(
+  req: Request,
+  _: Response,
+  next: NextFunction
+) {
+  if (
+    req.user?.role !== 'admin' &&
+    req.user?.role !== 'admin 2' &&
+    req.user?.role !== 'admin 4'
+  )
     throw createHttpError.Forbidden();
   next();
 }

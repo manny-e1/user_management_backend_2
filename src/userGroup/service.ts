@@ -1,7 +1,7 @@
 import { db } from '@/db/index.js';
 import { Role, roles, userGroups } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { desc, eq } from 'drizzle-orm';
 
 export type CreateUserGroup = {
@@ -11,8 +11,11 @@ export type CreateUserGroup = {
 
 export async function createUserGroup(body: CreateUserGroup) {
   try {
-    await db.insert(userGroups).values({ ...body });
-    return { message: 'success' };
+    const group = await db
+      .insert(userGroups)
+      .values({ ...body })
+      .returning();
+    return { message: 'success', group: group[0] };
   } catch (error) {
     logger.error(error);
     const err = error as Error;

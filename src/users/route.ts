@@ -1,13 +1,17 @@
-import { errorCatcher } from '@/middleware/error-middleware.js';
+import {
+  errorCatcher,
+  validateRequest,
+} from '@/middleware/error-middleware.js';
 import { Router } from 'express';
 import * as UserController from '@/users/controller.js';
-import { isAdmin, isAuthenticated } from '@/middleware/privilage.js';
+import { isAdminOrAdmin4, isAuthenticated } from '@/middleware/privilage.js';
+import { Email } from './types.js';
 
 const router = Router();
 
 router
   .route('/')
-  .all(errorCatcher(isAuthenticated), errorCatcher(isAdmin))
+  .all(errorCatcher(isAuthenticated), errorCatcher(isAdminOrAdmin4))
   .post(errorCatcher(UserController.httpCreateUser))
   .get(errorCatcher(UserController.httpGetAllUsers));
 router.post('/login', errorCatcher(UserController.httpLogin));
@@ -30,14 +34,17 @@ router.post('/reset-password', errorCatcher(UserController.httpResetPassword));
 router.patch(
   '/change-status',
   errorCatcher(isAuthenticated),
-  errorCatcher(isAdmin),
+  errorCatcher(isAdminOrAdmin4),
   errorCatcher(UserController.httpChangeUserStatus)
 );
 
-// router.delete(
-//   '/delete-wrong-passwords',
-//   errorCatcher(UserController.httpDeleteWrongPassTrials)
-// );
+router.post(
+  '/resend-email',
+  validateRequest({ body: Email }),
+  errorCatcher(isAuthenticated),
+  errorCatcher(isAdminOrAdmin4),
+  errorCatcher(UserController.httpResendAcctivationEmail)
+);
 router.patch(
   '/:id',
   errorCatcher(isAuthenticated),
@@ -45,7 +52,7 @@ router.patch(
 );
 router
   .route('/:id')
-  .all(errorCatcher(isAuthenticated), errorCatcher(isAdmin))
+  .all(errorCatcher(isAuthenticated), errorCatcher(isAdminOrAdmin4))
   .get(errorCatcher(UserController.httpGetUser))
   .put(errorCatcher(UserController.httpEditUser))
   .delete(errorCatcher(UserController.httpDeleteUser));

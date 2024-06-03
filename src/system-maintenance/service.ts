@@ -5,15 +5,18 @@ import {
   rejectionLogs,
 } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { desc, eq, inArray, sql, and } from 'drizzle-orm';
 
 export async function createMntLogs(
-  body: (NewMaintenanceLog & { createdAt: Date; updatedAt: Date })[]
+  body: (Omit<NewMaintenanceLog, 'extendedStartDate' | 'extendedEndDate'> & {
+    createdAt: Date;
+    updatedAt: Date;
+  })[]
 ) {
   try {
-    await db.insert(maintenanceLogs).values(body);
-    return { message: 'success' };
+    const log = await db.insert(maintenanceLogs).values(body).returning();
+    return { message: 'success', log: log[0] };
   } catch (error) {
     logger.error(error);
     return { error: (error as Error).message };
@@ -33,20 +36,29 @@ export async function getMntLogs(paymentSite: boolean) {
     iBizRakyatStatus: maintenanceLogs.iBizRakyatStatus,
     submissionStatus: maintenanceLogs.submissionStatus,
     approvalStatus: maintenanceLogs.approvalStatus,
-    // updatedAt: maintenanceLogs.updatedAt,
-    // createdAt: maintenanceLogs.createdAt,
+    extendedStartDate: maintenanceLogs.extendedStartDate,
+    extendedEndDate: maintenanceLogs.extendedEndDate,
+    approvedBy: maintenanceLogs.approvedBy,
+    rejectReason: maintenanceLogs.rejectReason,
+    isDeleted: maintenanceLogs.isDeleted,
   };
+
   const { submittedBy: _, ...forB2C } = fullObj;
   const returnData = paymentSite ? forB2C : fullObj;
   try {
     const mntLogs = await db
       .select(returnData)
       .from(maintenanceLogs)
-      .orderBy(desc(maintenanceLogs.updatedAt));
+      .orderBy(desc(maintenanceLogs.createdAt));
 
     const now = new Date().toISOString();
 
     const data = mntLogs.map((item, index: number) => {
+      if (item.startDate.toISOString() > now) {
+        item.iRakyatStatus = '';
+        item.iBizRakyatStatus = '';
+      }
+
       if (
         item.endDate.toISOString() < now
         // &&item.approvalStatus == 'Approved'
@@ -54,9 +66,28 @@ export async function getMntLogs(paymentSite: boolean) {
         return {
           ...item,
           mid: index + 1,
-          iRakyatStatus: item.iRakyatYN ? 'C' : '',
-          iBizRakyatStatus: item.iBizRakyatYN ? 'C' : '',
-          isCompleted: true,
+          iRakyatStatus:
+            item.iRakyatYN && item.approvedBy != ''
+              ? item.submissionStatus == 'New' &&
+                item.approvalStatus == 'Rejected'
+                ? ''
+                : item.iRakyatStatus == '' &&
+                  item.submissionStatus == 'Edited' &&
+                  item.approvalStatus == 'Rejected'
+                ? ''
+                : 'C'
+              : '',
+          iBizRakyatStatus:
+            item.iBizRakyatYN && item.approvedBy != ''
+              ? item.submissionStatus == 'New' &&
+                item.approvalStatus == 'Rejected'
+                ? ''
+                : item.iBizRakyatStatus == '' &&
+                  item.submissionStatus == 'Edited' &&
+                  item.approvalStatus == 'Rejected'
+                ? ''
+                : 'C'
+              : '',
         };
       } else if (
         item.approvalStatus == 'Rejected' &&
@@ -103,7 +134,6 @@ export async function getMntLog(id: string) {
           ...mntLog,
           iRakyatStatus: mntLog.iRakyatYN ? 'C' : '',
           iBizRakyatStatus: mntLog.iBizRakyatYN ? 'C' : '',
-          isCompleted: true,
         },
       };
     } else {
@@ -119,21 +149,25 @@ export async function getMntLog(id: string) {
   }
 }
 
-export async function updateMntLog(id: string, data: NewMaintenanceLog) {
+export async function updateMntLog(
+  id: string,
+  data: Omit<NewMaintenanceLog, 'startDate' | 'endDate'>
+) {
   try {
-    await db
+    const updatedLog = await db
       .update(maintenanceLogs)
       .set({
         ...data,
         submissionStatus: 'Edited',
         approvalStatus: 'Pending',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "approvalStatus" = 'Approved' THEN (CASE WHEN "iRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "approvalStatus" = 'Approved' THEN (CASE WHEN "iBizRakyatStatus"='C' THEN 'C' ELSE 'A' END) ELSE '' END`,
         submittedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(maintenanceLogs.id, id));
-    return { message: 'success' };
+      .where(eq(maintenanceLogs.id, id))
+      .returning();
+    return { message: 'success', updatedLog: updatedLog[0] };
   } catch (error) {
     logger.error(error);
     const err = error as Error;
@@ -153,8 +187,9 @@ export async function delMntLog(id: string) {
         iBizRakyatStatus: '',
         updatedAt: new Date(),
       })
-      .where(eq(maintenanceLogs.id, id));
-    return { message: 'success' };
+      .where(eq(maintenanceLogs.id, id))
+      .returning();
+    return { message: 'success', deletedLog: resp[0] };
   } catch (error) {
     logger.error(error);
     const err = error as Error;
@@ -165,18 +200,28 @@ export async function delMntLog(id: string) {
 // Checker Functions
 export async function approveMntLogs(ids: string[], email: string) {
   try {
-    await db
+    const approvedLog = await db
       .update(maintenanceLogs)
       .set({
         updatedAt: new Date(),
         approvedBy: email,
         approvalStatus: 'Approved',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'C' ELSE 'A' END) ELSE '' END`,
+        startDate: sql`CASE WHEN "extended_start_date" IS NOT NULL THEN extended_start_date ELSE "startDate" END`,
+        endDate: sql`CASE WHEN "extended_end_date" IS NOT NULL THEN extended_end_date ELSE "endDate" END`,
+        extendedEndDate: null,
+        extendedStartDate: null,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE AND "iRakyatStatus" != 'C' THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iRakyatYN" IS FALSE THEN '' ELSE "iRakyatStatus" END) END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE AND "iBizRakyatStatus"!='C' THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'C' ELSE 'A' END) ELSE (CASE WHEN "iBizRakyatYN" IS FALSE THEN '' ELSE "iBizRakyatStatus" END) END`,
         isDeleted: sql`CASE WHEN "submissionStatus"='Delete' THEN TRUE ELSE FALSE END`,
+        iRakyatCN: false,
+        iBizRakyatCN: false,
       })
-      .where(inArray(maintenanceLogs.id, ids));
-    return { message: 'success' };
+      .where(inArray(maintenanceLogs.id, ids))
+      .returning();
+
+    await db.delete(maintenanceLogs).where(eq(maintenanceLogs.isDeleted, true));
+
+    return { message: 'success', approvedLog: approvedLog };
   } catch (error) {
     logger.error(error);
     const err = error as Error;
@@ -186,17 +231,22 @@ export async function approveMntLogs(ids: string[], email: string) {
 
 export async function rejectMntLogs(ids: string[], email: string, msg: string) {
   try {
-    await db
+    const rejectedLogs = await db
       .update(maintenanceLogs)
       .set({
         updatedAt: new Date(),
         approvalStatus: 'Rejected',
-        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatStatus"='CC' THEN 'A' ELSE "iRakyatStatus" END) ELSE '' END`,
-        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatStatus"='CC' THEN 'A' ELSE "iBizRakyatStatus" END) ELSE '' END`,
+        iRakyatStatus: sql`CASE WHEN "iRakyatYN" IS TRUE THEN (CASE WHEN "iRakyatCN" IS TRUE THEN 'A' ELSE "iRakyatStatus" END) ELSE '' END`,
+        iBizRakyatStatus: sql`CASE WHEN "iBizRakyatYN" IS TRUE THEN (CASE WHEN "iBizRakyatCN" IS TRUE THEN 'A' ELSE "iBizRakyatStatus" END) ELSE '' END`,
+        extendedStartDate: null,
+        extendedEndDate: null,
         approvedBy: email,
         rejectReason: msg,
+        iRakyatCN: false,
+        iBizRakyatCN: false,
       })
-      .where(inArray(maintenanceLogs.id, ids));
+      .where(inArray(maintenanceLogs.id, ids))
+      .returning();
 
     await db.insert(rejectionLogs).values(
       ids.map((id) => {
@@ -209,7 +259,7 @@ export async function rejectMntLogs(ids: string[], email: string, msg: string) {
         };
       })
     );
-    return { message: 'success' };
+    return { message: 'success', rejectedLogs };
   } catch (error) {
     logger.error(error);
     const err = error as Error;
@@ -219,27 +269,26 @@ export async function rejectMntLogs(ids: string[], email: string, msg: string) {
 
 export async function completeMntLogs(id: string, channel: string) {
   try {
-    await db
+    const completedMntLog = await db
       .update(maintenanceLogs)
       .set(
         channel == 'rakyat'
           ? {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
-              isCompleted: true,
               submittedAt: new Date(),
-              iRakyatStatus: 'CC',
+              iRakyatCN: true,
             }
           : {
               approvalStatus: 'Pending',
               submissionStatus: 'Marked',
-              isCompleted: true,
               submittedAt: new Date(),
-              iBizRakyatStatus: 'CC',
+              iBizRakyatCN: true,
             }
       )
-      .where(eq(maintenanceLogs.id, id));
-    return { message: 'success' };
+      .where(eq(maintenanceLogs.id, id))
+      .returning();
+    return { message: 'success', completeMntLog: completedMntLog[0] };
   } catch (error) {
     logger.error(error);
     const err = error as Error;

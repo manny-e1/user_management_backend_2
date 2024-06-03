@@ -1,7 +1,7 @@
 import { db } from '@/db/index.js';
 import { Role, roles } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { eq } from 'drizzle-orm';
+import { asc, desc, eq, sql } from 'drizzle-orm';
 
 export async function createRole(role: Role) {
   try {
@@ -24,7 +24,8 @@ export async function getAllRoles() {
         id: roles.id,
         name: roles.role,
       })
-      .from(roles);
+      .from(roles)
+      .orderBy(sql`SUBSTRING(role::TEXT, 1, 15) ASC`);
 
     return { roles: result };
   } catch (error) {

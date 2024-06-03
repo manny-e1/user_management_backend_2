@@ -26,11 +26,18 @@ const message = ({
   const pwdReset = resetPasswordEmailTemplate({
     link: `${process.env.FRONT_END_URL}/change-password?token=${token}`,
     name,
+    email,
   });
+  console.log(
+    reset
+      ? `${process.env.FRONT_END_URL}/change-password?token=${token}`
+      : `${process.env.FRONT_END_URL}/set-password?token=${token}`
+  );
 
   const accActivation = activationEmailTemplate({
     link: `${process.env.FRONT_END_URL}/set-password?token=${token}`,
     name,
+    email,
     userGroup,
   });
   return {
@@ -74,6 +81,7 @@ const transport = nodemailer.createTransport({
     process.env.NODE_ENV === 'development'
       ? Number(process.env.EMAIL_PORT_LOCAL)
       : Number(process.env.EMAIL_PORT),
+  secure: false,
   auth: {
     user:
       process.env.NODE_ENV === 'development'
@@ -83,6 +91,9 @@ const transport = nodemailer.createTransport({
       process.env.NODE_ENV === 'development'
         ? process.env.EMAIL_PASS_LOCAL
         : process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 

@@ -18,12 +18,16 @@ import dotenv from 'dotenv';
 import { commonRouter } from './common/route.js';
 import { ENVOBJ } from './utils/common-types.js';
 import { ZodError } from 'zod';
-import { Role } from './db/schema.js';
+import { Role, roleValues, roles } from './db/schema.js';
+import { db } from './db/index.js';
+import { mfaConfigRouter } from './mfa-config/route.js';
+import { iSecureNoteRouter } from './isecure-notes/route.js';
+import { auditLogRouter } from './audit-logs/route.js';
 
 declare global {
   namespace Express {
     interface Request {
-      user: { id?: string; role?: Role };
+      user: { id?: string; role?: Role; email: string | undefined | null };
     }
   }
 }
@@ -62,8 +66,11 @@ if (process.env.NODE_ENV !== 'production') {
 
 const domains = [
   'http://54.254.130.92:3000',
-  'http://54.254.130.92:3001',
+  'http://13.229.106.122:3001',
   'http://13.229.106.122:3000',
+  'http://20.205.146.121:3002',
+  'http://rppnew.bankrakyat.com.my:3002',
+  'http://20.205.146.121:3001',
   '196.191.190.114',
   'http://196.191.190.114:3000',
   'https://payment.bkrm.pro',
@@ -79,7 +86,13 @@ const domainsToUse =
     ? domains
     : domains.slice(0, domains.length - 5);
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: 'cross-origin',
+    },
+  })
+);
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -96,8 +109,17 @@ app.use(
     },
   })
 );
-
+app.disable('x-powered-by');
+app.use(
+  helmet.hsts({
+    maxAge: 31536000, // 1 year in seconds
+    includeSubDomains: true,
+    preload: true,
+  })
+);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+// app.use(express.raw({ type: () => true }));
 
 // app.use((req, res, next) => {
 //   let address =
@@ -127,8 +149,31 @@ app.use('/api/roles', roleRouter);
 app.use('/api/transactions', transactionLogRouter);
 app.use('/api/maintenance', maintenanceLogRouter);
 app.use('/api/password-histories', passwordHistoryRouter);
+app.use('/api/mfa-configs', mfaConfigRouter);
+app.use('/api/isecure-notes', iSecureNoteRouter);
+app.use('/api/audit-logs', auditLogRouter);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(notFound);
 app.use(errorHandler);
+
+(async () => {
+  try {
+    const records = await db.select({ id: roles.id }).from(roles);
+    if (records.length) {
+      return;
+    }
+    await db.transaction(async (trx) => {
+      await trx
+        .insert(roles)
+        .values(roleValues.map((val) => ({ role: val })))
+        .execute();
+    });
+  } catch (error) {
+    logger.error(error);
+    process.exit(1);
+  }
+})();
 
 export default app;

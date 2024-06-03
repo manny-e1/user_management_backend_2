@@ -3,7 +3,8 @@ import type { ChangeStatus } from '@/transaction-limit/service.js';
 import { Request, Response } from 'express';
 import * as TxnLimitService from '@/transaction-limit/service.js';
 import createHttpError from 'http-errors';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS, MODULES } from '@/utils/constants.js';
+import * as AuditLogService from '@/audit-logs/service.js';
 
 export async function httpCreateTxnLog(
   req: Request<{}, {}, NewTransactionLog>,
@@ -22,8 +23,24 @@ export async function httpCreateTxnLog(
     marker,
   });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.TRANSACTION_LIMIT,
+      description: `new request failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.TRANSACTION_LIMIT,
+    description: `new request added`,
+    newValue: null,
+    status: 'S',
+    previousValue: null,
+  });
   res.status(201).json(result);
 }
 
@@ -104,13 +121,25 @@ export async function httpChangeStatus(
 ) {
   const { checker, msg, status } = req.body;
   const { id } = req.params;
+  const txnLog = (await TxnLimitService.getTxnLog(id)).txnLog;
+  const errMsg = msg ? 'rejecting request failed' : 'approving request failed';
+  const successMsg = msg ? 'rejected request' : 'approved request';
   const result = await TxnLimitService.changeStatus({
     id,
     checker,
     msg,
     status,
   });
+
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.TRANSACTION_LIMIT,
+      description: errMsg,
+      newValue: null,
+      status: 'F',
+      previousValue: JSON.stringify(txnLog),
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound(
         'updating transaction log failed, make sure the id is valid'
@@ -120,5 +149,13 @@ export async function httpChangeStatus(
     }
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.TRANSACTION_LIMIT,
+    description: successMsg,
+    newValue: JSON.stringify(result.updatedTxnLog),
+    status: 'S',
+    previousValue: JSON.stringify(txnLog),
+  });
   res.json(result);
 }

@@ -8,7 +8,7 @@ import {
   wrongPasswordTrial,
 } from '@/db/schema.js';
 import type { LoginSession, Status } from '@/db/schema.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { logger } from '@/logger.js';
 import { SelectedFields, date } from 'drizzle-orm/pg-core';
 
@@ -69,8 +69,9 @@ export async function getAllUsers() {
 }
 
 export async function getUser(id: string, pwd?: boolean) {
-  const select: SelectedFields = pwd
-    ? {
+  try {
+    const user = await db
+      .select({
         id: users.id,
         name: users.name,
         email: users.email,
@@ -78,19 +79,7 @@ export async function getUser(id: string, pwd?: boolean) {
         staffId: users.staffId,
         status: users.status,
         password: users.password,
-      }
-    : {
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        userGroup: users.userGroup,
-        staffId: users.staffId,
-        status: users.status,
-      };
-
-  try {
-    const user = await db
-      .select(select)
+      })
       .from(users)
       .where(eq(users.id, id))
       .limit(1);
@@ -98,7 +87,25 @@ export async function getUser(id: string, pwd?: boolean) {
     if (!user.length) {
       return { error: ERRORS.NOT_FOUND };
     }
-    return { user: user[0] };
+    const nUser = pwd
+      ? {
+          id: user[0].id,
+          name: user[0].name,
+          email: user[0].email,
+          userGroup: user[0].userGroup,
+          staffId: user[0].staffId,
+          status: user[0].status,
+          password: user[0].password,
+        }
+      : {
+          id: user[0].id,
+          name: user[0].name,
+          email: user[0].email,
+          userGroup: user[0].userGroup,
+          staffId: user[0].staffId,
+          status: user[0].status,
+        };
+    return { user: nUser };
   } catch (error) {
     logger.error(error);
     const err = error as Error;
@@ -192,6 +199,7 @@ export async function getUserByEmail(email: string) {
         password: users.password,
         email: users.email,
         userGroup: users.userGroup,
+        userGroupName: userGroups.name,
         staffId: users.staffId,
         role: roles.role,
         status: users.status,
@@ -315,19 +323,31 @@ export async function createLoginSession(
 }
 
 export async function getLoginSession(
-  body: Pick<LoginSession, 'userId' | 'ip' | 'userAgent'>
+  body: Pick<LoginSession, 'userId' | 'userAgent' | 'sessionToken'>
 ) {
   try {
     const loginSession = await db
-      .select()
+      .select({
+        id: loginSessions.id,
+        userId: loginSessions.userId,
+        userAgent: loginSessions.userAgent,
+        sessionToken: loginSessions.sessionToken,
+        status: loginSessions.status,
+        userRole: loginSessions.userRole,
+        userEmail: users.email,
+      })
       .from(loginSessions)
+      .leftJoin(users, eq(users.id, loginSessions.userId))
       .where(
         and(
           eq(loginSessions.userId, body.userId),
-          eq(loginSessions.ip, body.ip),
-          eq(loginSessions.userAgent, body.userAgent)
+          eq(loginSessions.userAgent, body.userAgent),
+          eq(loginSessions.sessionToken, body.sessionToken),
+          eq(loginSessions.status, 'active')
         )
-      );
+      )
+      .orderBy(desc(loginSessions.createdAt))
+      .limit(1);
     if (!loginSession.length) {
       return { error: 'not found' };
     }
@@ -342,11 +362,9 @@ export async function getLoginSession(
 export async function logoutUser({
   id,
   userAgent,
-  ip,
 }: {
   id: string;
   userAgent: string;
-  ip: string;
 }) {
   try {
     const result = await db
@@ -356,7 +374,7 @@ export async function logoutUser({
         and(
           eq(loginSessions.userId, id),
           eq(loginSessions.userAgent, userAgent),
-          eq(loginSessions.ip, ip)
+          eq(loginSessions.status, 'active')
         )
       );
     if (result.rowCount === 0) {

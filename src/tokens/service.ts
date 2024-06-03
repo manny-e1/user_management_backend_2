@@ -1,7 +1,7 @@
 import { db } from '@/db/index.js';
 import { tokens, users } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { eq } from 'drizzle-orm';
 
 export type CreateToken = {

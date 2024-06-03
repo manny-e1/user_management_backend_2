@@ -1,9 +1,11 @@
 export function resetPasswordEmailTemplate({
   link,
   name,
+  email,
 }: {
   link: string;
   name: string;
+  email: string;
 }) {
   return `
   <!DOCTYPE html>
@@ -57,18 +59,18 @@ export function resetPasswordEmailTemplate({
                     >
                       <p class="text-start">Hi ${name},</p>
                       <p class="text-start">
-                        Someone recently requested that the password be reset
-                        for <span class="text-info" style="color:#17a2b8;">${name}</span>
+                        You have recently requested to have password reset
+                        for <span class="text-info" style="color:#17a2b8;">${email}</span>
                       </p>
                       <p class="text-start">
                         To reset your password please click this
                         <a href=${link}>link</a>.
                       </p>
                       <p class="text-start">
-                        The link will expire in 30 minutes.
+                        Note: This link will expire in 30 minutes upon this email is sent.
                       </p>
                       <p class="text-start">
-                        If this is a mistake just ignore this email - your
+                        *If this is a mistake just ignore this email - your
                         password will not be changed.
                       </p>
                     </div>

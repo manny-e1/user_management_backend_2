@@ -1,10 +1,12 @@
 export function activationEmailTemplate({
   link,
   name,
+  email,
   userGroup,
 }: {
   link: string;
   name: string;
+  email: string;
   userGroup: string;
 }) {
   return `
@@ -59,19 +61,17 @@ export function activationEmailTemplate({
                     margin: 0 auto;
                     "
                     >
-                      <p class="text-start">Hello ${name},</p>
+                      <p class="text-start">Hi ${name},</p>
                       <p class="text-start">
-                        You are registering as a ${userGroup}.
+                        You have been registered as ${userGroup}.
                       </p>
                       <p class="text-start">
-                        Please click on the <a href=${link}>link</a> to set your
-                        password.
+                        Please click this link <a href=${link}>Activate Account</a> to set your
+                        own password and activate your new account. 
                       </p>
-                      <p class="text-start">Username: ${name
-                        .replace(/ /g, '')
-                        .toLowerCase()}</p>
+                      <p class="text-start">Username (Email): ${email}</p>
                       <p class="text-start">
-                        The link will expire in 30 minutes.
+                        Note: This link will expire in 30 minutes upon this email is sent.
                       </p>
                       <div class="row text-center d-inline float-start"></div>
                       <p class="text-start">&nbsp;</p>
