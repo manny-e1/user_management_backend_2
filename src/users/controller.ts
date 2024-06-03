@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import type { CreateUser } from '@/users/service.js';
 import * as UserService from '@/users/service.js';
 import createHttpError from 'http-errors';
-import { ERRORS } from '@/utils/errors.js';
-import { Status } from '@/db/schema.js';
+import { ERRORS, MODULES } from '@/utils/constants.js';
+import { Status, User } from '@/db/schema.js';
 import {
   generateRandomUuid,
   hasChangedBefore,
@@ -18,6 +18,7 @@ import jwt from 'jsonwebtoken';
 import * as PasswordHistoryService from '@/password-history/service.js';
 import { getUserGroup } from '@/userGroup/service.js';
 import { Email } from './types.js';
+import * as AuditLogService from '@/audit-logs/service.js';
 
 export async function httpCreateUser(
   req: Request<{}, {}, CreateUser>,
@@ -31,6 +32,14 @@ export async function httpCreateUser(
   }
   const result = await UserService.createUser(req.body);
   if (result.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: 'user creation failed',
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (
       result.error.includes('email address') ||
       result.error === ERRORS.INVALID_ID
@@ -43,12 +52,31 @@ export async function httpCreateUser(
   const token = generateRandomUuid(190, 'base64');
   const tok = await createToken({ token, userId: user.id });
   if (tok.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `user creation failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (tok.status) {
       throw createHttpError.BadRequest(tok.error);
     }
     throw createHttpError(tok.error);
   }
   const userGrp = await getUserGroup(user.userGroup);
+  if (userGrp.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `user creation failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
+    throw createHttpError(userGrp.error);
+  }
   const msg = message({
     token,
     email: user.email,
@@ -65,6 +93,14 @@ export async function httpCreateUser(
     .catch((err) =>
       logger.error(`sending user activation email for ${email} failed`, err)
     );
+  await AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.USER_MANAGEMENT,
+    description: `User[${user.email}] created`,
+    newValue: JSON.stringify(user),
+    status: 'S',
+    previousValue: null,
+  });
   res.status(201).json({ message: 'success' });
 }
 
@@ -101,6 +137,14 @@ export async function httpLogin(
 
   const result = await UserService.getUserByEmail(email);
   if (result.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_LOGIN,
+      description: `User[${email}] login failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (result.error === ERRORS.NOT_FOUND) {
       throw createHttpError.NotFound('invalid credentials');
     }
@@ -110,6 +154,14 @@ export async function httpLogin(
   const user = result.user!;
 
   if (user.status === 'locked') {
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_LOGIN,
+      description: `User[${email}] login failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     throw createHttpError.Unauthorized(
       'your account is locked, contact admin to unlock'
     );
@@ -134,11 +186,27 @@ export async function httpLogin(
       id: user.id!,
       status: 'locked',
     });
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_LOGIN,
+      description: `user[${email}] login failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     throw createHttpError.Unauthorized(
       'You have reached maximum invalid login and your account is locked'
     );
   } else if (!verify) {
     await UserService.addWrongPasswordTrial(user.id);
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_LOGIN,
+      description: `User[${email}] login failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     throw createHttpError.Unauthorized('invalid credentials');
   }
 
@@ -159,14 +227,25 @@ export async function httpLogin(
   if (loginSession.error) {
     throw createHttpError.InternalServerError("couldn't create login session");
   }
+  const omitedUser = {
+    id: user.id,
+    email: user.email,
+    status: user.status,
+    staffId: user.staffId,
+    role: user.role,
+    userGroup: user.userGroup,
+  };
+  await AuditLogService.createAuditLog({
+    performedBy: email,
+    module: MODULES.USER_LOGIN,
+    description: `User[${user.email}] logged in`,
+    newValue: JSON.stringify(omitedUser),
+    status: 'S',
+    previousValue: null,
+  });
   return res.status(200).json({
     user: {
-      id: user.id,
-      email: user.email,
-      status: user.status,
-      staffId: user.staffId,
-      role: user.role,
-      userGroup: user.userGroup,
+      ...omitedUser,
       token,
     },
   });
@@ -178,12 +257,42 @@ export async function httpChangeUserStatus(
 ) {
   const { status, email } = req.body;
 
+  const userResult = await UserService.getUserByEmail(email);
+  if (userResult.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `status change failed(while getting user by email)`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
+    if (userResult.error === ERRORS.NOT_FOUND) {
+      throw createHttpError.NotFound('user not found');
+    }
+    throw createHttpError(userResult.error);
+  }
+  const omitedUser = {
+    id: userResult.user!.id,
+    email: userResult.user!.email,
+    status: userResult.user!.status,
+    staffId: userResult.user!.staffId,
+    userGroup: userResult.user!.userGroup,
+  };
   const result = await UserService.changeUserStatus({
     id: 'id',
     email,
     status,
   });
   if (result.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `status change failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound(
         "Couldn't change the user status, make sure the user id/email is valid"
@@ -194,14 +303,30 @@ export async function httpChangeUserStatus(
   if (status === 'active') {
     const result2 = await UserService.deleteWrongPassTrials(result.id!);
     if (result2.error) {
+      await AuditLogService.createAuditLog({
+        performedBy: req.user.email!,
+        module: MODULES.USER_MANAGEMENT,
+        description: `status change failed`,
+        newValue: null,
+        status: 'F',
+        previousValue: null,
+      });
       if (result2.error === ERRORS.DELETE_FAILED) {
         throw createHttpError.NotFound(
-          'Failed to delete the user, make your the user id is valid'
+          "failed to delete the user's wrong password trials, make sure the user id is valid"
         );
       }
       throw createHttpError(result2.error);
     }
   }
+  await AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.USER_MANAGEMENT,
+    description: `User[${email}] status changed`,
+    newValue: JSON.stringify({ omitedUser, status }),
+    status: 'S',
+    previousValue: JSON.stringify(omitedUser),
+  });
   res.status(200).json({ message: 'success' });
 }
 
@@ -228,8 +353,32 @@ export async function httpEditUser(
 ) {
   const { name, userGroup } = req.body;
   const { id: userId } = req.params;
+  const userResult = await UserService.getUser(userId, false);
+  if (userResult.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `user edit failed(while getting user by id)`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
+    if (userResult.error === ERRORS.NOT_FOUND) {
+      throw createHttpError.NotFound('user not found');
+    }
+    throw createHttpError(userResult.error);
+  }
+
   const result = await UserService.editUser({ name, userGroup, userId });
   if (result.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `user edit failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: JSON.stringify(userResult.user),
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound(
         'failed to update user, make sure the user id is correct'
@@ -239,6 +388,14 @@ export async function httpEditUser(
     }
     throw createHttpError(result.error);
   }
+  await AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.USER_MANAGEMENT,
+    description: `User[${userResult.user?.email}] edited`,
+    newValue: JSON.stringify({ ...userResult.user, name, userGroup }),
+    status: 'S',
+    previousValue: JSON.stringify(userResult.user),
+  });
   res.json({ message: 'success' });
 }
 
@@ -286,6 +443,14 @@ export async function httpResendAcctivationEmail(
   const { email } = req.body;
   const result = await UserService.getUserByEmail(email);
   if (result.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `resend activation email failed for user[${email}]`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (result.error === ERRORS.NOT_FOUND) {
       throw createHttpError.NotFound('user not found');
     }
@@ -293,11 +458,28 @@ export async function httpResendAcctivationEmail(
   }
   const user = result.user!;
   if (user.status === 'active') {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `resend activation email failed for user[${email}]`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
+
     throw createHttpError.BadRequest('user is already activated');
   }
   const token = generateRandomUuid(190, 'base64');
   const tok = await createToken({ token, userId: user.id });
   if (tok.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `resend activation email failed for user[${email}]`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (tok.status) {
       throw createHttpError.BadRequest(tok.error);
     }
@@ -319,24 +501,49 @@ export async function httpResendAcctivationEmail(
     .catch((err) =>
       logger.error(`sending user activation email for ${email} failed`, err)
     );
+  await AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.USER_MANAGEMENT,
+    description: `resent activation email for user[${email}]`,
+    newValue: null,
+    status: 'S',
+    previousValue: null,
+  });
   res.json({ message: 'success' });
 }
 
 export async function httpForgotPassword(
-  req: Request<{}, {}, { email: string; activate?: boolean }>,
+  req: Request<{}, {}, { email: string }>,
   res: Response
 ) {
-  const { email, activate } = req.body;
+  const { email } = req.body;
 
   logger.info('Forgot password request ...');
 
   if (!email) {
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_MANAGEMENT,
+      description: `forgot password request failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
+
     throw createHttpError.BadRequest(
       'please include email in your request body'
     );
   }
   const result = await UserService.getUserByEmail(email);
   if (result.error) {
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_MANAGEMENT,
+      description: `forgot password request failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (result.error === ERRORS.NOT_FOUND) {
       throw createHttpError.NotFound('Email not found');
     }
@@ -346,7 +553,14 @@ export async function httpForgotPassword(
   const token = generateRandomUuid(190, 'base64');
   const tok = await createToken({ token, userId: user.id });
   if (tok.error) {
-    logger.info('Token error ...');
+    await AuditLogService.createAuditLog({
+      performedBy: email,
+      module: MODULES.USER_MANAGEMENT,
+      description: `forgot password request failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
 
     if (tok.status) {
       throw createHttpError.BadRequest(tok.error);
@@ -358,28 +572,27 @@ export async function httpForgotPassword(
     token,
     subject: 'Password Reset',
     name: user.name,
-    reset: !activate,
+    reset: true,
     userGroup: user.userGroupName,
   });
   logger.info('transport email ...');
   transport
     .sendMail(msg)
     .then((_) =>
-      logger.info(
-        `${
-          activate ? 'activation' : 'reset password'
-        } email sent to user with email ${email}`
-      )
+      logger.info(`reset password
+         email sent to user with email ${email}`)
     )
     .catch((err) =>
-      logger.error(
-        `sending ${
-          activate ? 'activation' : 'reset password'
-        } email for ${email} failed`,
-        err
-      )
+      logger.error(`sending reset passwordemail for ${email} failed`, err)
     );
-
+  await AuditLogService.createAuditLog({
+    performedBy: email,
+    module: MODULES.USER_MANAGEMENT,
+    description: `forgot password request for user[${email}]`,
+    newValue: null,
+    status: 'S',
+    previousValue: null,
+  });
   res.json({ message: 'success' });
 }
 
@@ -445,9 +658,24 @@ export async function httpResetPassword(
   res: Response
 ) {
   const { password, id, src } = req.body;
+  const isActivate = src === 'activate';
+  const module = isActivate ? MODULES.USER_ACTIVATION : MODULES.PASSWORD_RESET;
+  const errorMessage = `${module} failed`;
   const userId = id ?? req.app.get('user').id;
+  let user: Omit<User, 'password' | 'createdAt' | 'updatedAt'> | undefined =
+    undefined;
+  user = (await UserService.getUser(userId, true)).user;
+
   const result = await PasswordHistoryService.getPasswordHistory(userId);
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: user?.email || '',
+      module,
+      description: errorMessage,
+      newValue: null,
+      status: 'F',
+      previousValue: isActivate ? JSON.stringify(user) : null,
+    });
     if (result.error === ERRORS.INVALID_ID) {
       throw createHttpError.BadRequest(ERRORS.INVALID_ID);
     }
@@ -457,6 +685,15 @@ export async function httpResetPassword(
   const changedBefore = await hasChangedBefore(pwdHistory, password);
 
   if (changedBefore) {
+    AuditLogService.createAuditLog({
+      performedBy: user?.email || '',
+      module,
+      description: errorMessage,
+      newValue: null,
+      status: 'F',
+      previousValue: isActivate ? JSON.stringify(user) : null,
+    });
+
     throw createHttpError.BadRequest(
       'You can’t reuse old password. Please enter new password'
     );
@@ -474,18 +711,35 @@ export async function httpResetPassword(
       });
 
     if (todayChangeCount >= 2) {
+      AuditLogService.createAuditLog({
+        performedBy: user?.email || '',
+        module,
+        description: errorMessage,
+        newValue: null,
+        status: 'F',
+        previousValue: isActivate ? JSON.stringify(user) : null,
+      });
+
       throw createHttpError.BadRequest(
         'You’ve exceeded the number of times password update per day. Please try again tomorrow'
       );
     }
   }
 
-  if (src && src === 'activate') {
+  if (isActivate) {
     const result = await UserService.changeUserStatus({
       id: userId,
       status: 'active',
     });
     if (result.error) {
+      AuditLogService.createAuditLog({
+        performedBy: user?.email || '',
+        module,
+        description: errorMessage,
+        newValue: null,
+        status: 'F',
+        previousValue: isActivate ? JSON.stringify(user) : null,
+      });
       if (result.error === ERRORS.UPDATE_FAILED) {
         throw createHttpError.NotFound(
           'failed to activate account, make your the user id is valid'
@@ -502,6 +756,14 @@ export async function httpResetPassword(
     source: src === 'activate' ? 'activation' : 'reset',
   });
   if (addPwdResult.error) {
+    AuditLogService.createAuditLog({
+      performedBy: user?.email || '',
+      module,
+      description: errorMessage,
+      newValue: null,
+      status: 'F',
+      previousValue: isActivate ? JSON.stringify(user) : null,
+    });
     throw createHttpError.InternalServerError(addPwdResult.error);
   }
 
@@ -510,11 +772,27 @@ export async function httpResetPassword(
     password: hashedPassword,
   });
   if (resetPwdResult.error) {
+    AuditLogService.createAuditLog({
+      performedBy: user?.email || '',
+      module,
+      description: errorMessage,
+      newValue: null,
+      status: 'F',
+      previousValue: isActivate ? JSON.stringify(user) : null,
+    });
     if (resetPwdResult.error === ERRORS.NOT_FOUND) {
       throw createHttpError.NotFound('user not found');
     }
     throw createHttpError(resetPwdResult.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: user?.email || '',
+    module,
+    description: `user activated`,
+    newValue: isActivate ? JSON.stringify({ ...user, status: 'active' }) : null,
+    status: 'S',
+    previousValue: isActivate ? JSON.stringify(user) : null,
+  });
   res.json(resetPwdResult);
 }
 
@@ -523,8 +801,17 @@ export async function httpDeleteUser(
   res: Response
 ) {
   const { id } = req.params;
+  const user = (await UserService.getUser(id, false)).user;
   const result = await UserService.deleteUser(id);
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_MANAGEMENT,
+      description: `delete account failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: JSON.stringify(user),
+    });
     if (result.error === ERRORS.DELETE_FAILED) {
       throw createHttpError.NotFound(
         'Failed to delete the user, make your the user id is valid'
@@ -532,6 +819,14 @@ export async function httpDeleteUser(
     }
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.USER_MANAGEMENT,
+    description: `user[${user?.email}] account deleted`,
+    newValue: null,
+    status: 'S',
+    previousValue: JSON.stringify(user),
+  });
   res.status(200).json(result);
 }
 
@@ -540,18 +835,30 @@ export async function httpLogoutUser(
   res: Response
 ) {
   const { id } = req.params;
-  // const ip =
-  //   (req.headers['x-forwarded-for'] as string) ||
-  //   req.socket.remoteAddress ||
-  //   '';
   const userAgent = req.headers['user-agent'] || '';
   const result = await UserService.logoutUser({ id, userAgent });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.USER_LOGOUT,
+      description: `User[${req.user.email}] logout failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.NotFound('Failed to logout the user');
     }
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.USER_LOGOUT,
+    description: `User[${req.user.email}] logged out`,
+    newValue: null,
+    status: 'S',
+    previousValue: null,
+  });
   res.status(200).json(result);
 }
 

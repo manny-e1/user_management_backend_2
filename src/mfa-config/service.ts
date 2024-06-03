@@ -1,7 +1,7 @@
 import { db } from '@/db/index.js';
 import { MFAConfig, mfaConfigs, users } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { and, desc, eq } from 'drizzle-orm';
 import { ReviewMFAConfig, UpdateMFAConfig } from './types.js';
 import { alias } from 'drizzle-orm/pg-core';
@@ -13,8 +13,8 @@ export async function create(
   >
 ) {
   try {
-    await db.insert(mfaConfigs).values(body);
-    return { message: 'success' };
+    const mfaConfig = await db.insert(mfaConfigs).values(body).returning();
+    return { message: 'success', mfaConfig: mfaConfig[0] };
   } catch (error) {
     logger.error(error);
     return { error: (error as Error).message };
@@ -137,11 +137,12 @@ export async function reviewMFAConfig(
     const result = await db
       .update(mfaConfigs)
       .set({ ...body, actionTakenTime: new Date(), updatedAt: new Date() })
-      .where(eq(mfaConfigs.id, id));
-    if (!result.rowCount) {
+      .where(eq(mfaConfigs.id, id))
+      .returning();
+    if (!result.length) {
       return { error: ERRORS.UPDATE_FAILED };
     }
-    return { message: 'success' };
+    return { message: 'success', mfaConfig: result[0] };
   } catch (error) {
     logger.error(error);
     const err = error as Error;

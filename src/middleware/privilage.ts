@@ -44,6 +44,7 @@ export async function isAuthenticated(
     req.user = {
       id: result.loginSession?.userId,
       role: result.loginSession?.userRole,
+      email: result.loginSession?.userEmail,
     };
     next();
   } catch (error) {

@@ -1,8 +1,8 @@
 import { db } from '@/db/index.js';
 import { NewTransactionLog, transactionLogs } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
-import { desc, eq } from 'drizzle-orm';
+import { ERRORS } from '@/utils/constants.js';
+import { desc, eq, sql } from 'drizzle-orm';
 
 export type ChangeStatus = {
   id: string;
@@ -13,8 +13,8 @@ export type ChangeStatus = {
 
 export async function createTxnLog(body: NewTransactionLog) {
   try {
-    await db.insert(transactionLogs).values(body);
-    return { message: 'success' };
+    const log = await db.insert(transactionLogs).values(body).returning();
+    return { message: 'success', log: log[0] };
   } catch (error) {
     logger.error(error);
     return { error: (error as Error).message };

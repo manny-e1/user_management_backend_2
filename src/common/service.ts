@@ -7,7 +7,7 @@ import {
   users,
 } from '@/db/schema.js';
 import { logger } from '@/logger.js';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS } from '@/utils/constants.js';
 import { desc, eq, inArray, sql, and } from 'drizzle-orm';
 
 export async function getPendingCount(type: string) {

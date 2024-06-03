@@ -296,3 +296,24 @@ export const isecureNotes = pgTable('isecure_notes', {
 });
 
 export type ISecureNote = InferModel<typeof isecureNotes>;
+
+const auditLogSchema = {
+  id: uuid('id').defaultRandom().notNull().primaryKey(),
+  performedBy: varchar('email', { length: 256 }).notNull(),
+  module: varchar('module', { length: 50 }).notNull(),
+  description: varchar('description', { length: 255 }).notNull(),
+  // action: varchar('action', { length: 20 }).notNull(),
+  status: char('status', { length: 1, enum: ['F', 'S'] }).notNull(),
+  newValue: text('new_value'),
+  previousValue: text('previous_value'),
+  createdAt: timestamp('created_at').notNull(),
+};
+export const coldAuditLogs = pgTable('cold_audit_logs', {
+  ...auditLogSchema,
+});
+
+export const hotAuditLogs = pgTable('hot_audit_logs', {
+  ...auditLogSchema,
+});
+
+export type AuditLog = InferModel<typeof coldAuditLogs>;

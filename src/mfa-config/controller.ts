@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { CreateMFAConfig, ReviewMFAConfig, UpdateMFAConfig } from './types.js';
 import * as MFAConfigService from './service.js';
 import createHttpError from 'http-errors';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS, MODULES } from '@/utils/constants.js';
+import * as AuditLogService from '@/audit-logs/service.js';
 
 export async function httpCreateMFAConfig(
   req: Request<{}, {}, CreateMFAConfig>,
@@ -21,9 +22,25 @@ export async function httpCreateMFAConfig(
     updatedAt: new Date(),
   });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.MFA_CONFIGURATION,
+      description: `new request failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     throw createHttpError(result.error);
   }
-  res.status(201).json(result);
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.MFA_CONFIGURATION,
+    description: `new request added`,
+    newValue: JSON.stringify(result.mfaConfig),
+    status: 'S',
+    previousValue: null,
+  });
+  res.status(201).json({ message: result.message });
 }
 
 export async function httpGetMFAConfigs(req: Request, res: Response) {
@@ -106,12 +123,24 @@ export async function httpReviewMFAConfig(
 ) {
   const { id } = req.params;
   const { status, reason } = req.body;
+  const prevConfig = (await MFAConfigService.getMFAConfig(id)).mfaConfig;
+  const errMsg = status === 'approved' ? 'approval failed' : 'rejection failed';
+  const successMsg =
+    status === 'approved' ? 'request approved' : 'request rejected';
   const result = await MFAConfigService.reviewMFAConfig(id, {
     status,
     reason,
     checker: req.user.id!,
   });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.MFA_CONFIGURATION,
+      description: errMsg,
+      newValue: null,
+      status: 'F',
+      previousValue: JSON.stringify(prevConfig),
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.InternalServerError('update failed');
     } else if (result.error === ERRORS.INVALID_ID) {
@@ -119,5 +148,13 @@ export async function httpReviewMFAConfig(
     }
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.MFA_CONFIGURATION,
+    description: successMsg,
+    newValue: JSON.stringify(result.mfaConfig),
+    status: 'S',
+    previousValue: JSON.stringify(prevConfig),
+  });
   res.status(200).json(result);
 }

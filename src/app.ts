@@ -22,11 +22,12 @@ import { Role, roleValues, roles } from './db/schema.js';
 import { db } from './db/index.js';
 import { mfaConfigRouter } from './mfa-config/route.js';
 import { iSecureNoteRouter } from './isecure-notes/route.js';
+import { auditLogRouter } from './audit-logs/route.js';
 
 declare global {
   namespace Express {
     interface Request {
-      user: { id?: string; role?: Role };
+      user: { id?: string; role?: Role; email: string | undefined | null };
     }
   }
 }
@@ -150,6 +151,7 @@ app.use('/api/maintenance', maintenanceLogRouter);
 app.use('/api/password-histories', passwordHistoryRouter);
 app.use('/api/mfa-configs', mfaConfigRouter);
 app.use('/api/isecure-notes', iSecureNoteRouter);
+app.use('/api/audit-logs', auditLogRouter);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

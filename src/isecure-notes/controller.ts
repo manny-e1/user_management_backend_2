@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { CreateISecureNote, ReviewISecureNote } from './types.js';
 import * as iSecureNoteService from './service.js';
 import createHttpError from 'http-errors';
-import { ERRORS } from '@/utils/errors.js';
+import { ERRORS, MODULES } from '@/utils/constants.js';
+import * as AuditLogService from '@/audit-logs/service.js';
 
 export async function httpCreateISecureNote(
   req: Request<{}, {}, CreateISecureNote>,
@@ -12,7 +13,6 @@ export async function httpCreateISecureNote(
   if (!req.file) {
     throw createHttpError.BadRequest('no file uploaded');
   }
-
   const result = await iSecureNoteService.createISecureNote({
     cDisplayStatus,
     nDisplayStatus,
@@ -22,8 +22,24 @@ export async function httpCreateISecureNote(
     maker: req.user.id!,
   });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.ISECURE_NOTE,
+      description: `new request failed`,
+      newValue: null,
+      status: 'F',
+      previousValue: null,
+    });
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.ISECURE_NOTE,
+    description: `new request added`,
+    newValue: JSON.stringify(result.note),
+    status: 'S',
+    previousValue: null,
+  });
   res.status(201).json(result);
 }
 
@@ -86,12 +102,24 @@ export async function httpReviewISecureNote(
 ) {
   const { id } = req.params;
   const { status, reason } = req.body;
+  const errMsg = status === 'approved' ? 'approval failed' : 'rejection failed';
+  const successMsg =
+    status === 'approved' ? 'request approved' : 'request rejected';
+  const prevNote = (await iSecureNoteService.getISecureNote(id)).iSecureNote;
   const result = await iSecureNoteService.reviewISecureNote(id, {
     status,
     reason,
     checker: req.user.id!,
   });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.ISECURE_NOTE,
+      description: errMsg,
+      newValue: null,
+      status: 'F',
+      previousValue: JSON.stringify(prevNote),
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.InternalServerError('update failed');
     } else if (result.error === ERRORS.INVALID_ID) {
@@ -99,6 +127,14 @@ export async function httpReviewISecureNote(
     }
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.ISECURE_NOTE,
+    description: successMsg,
+    newValue: JSON.stringify(result.note),
+    status: 'S',
+    previousValue: JSON.stringify(prevNote),
+  });
   res.status(200).json(result);
 }
 
@@ -110,11 +146,20 @@ export async function httpUpdateISecureNote(
   if (!req.file) {
     throw createHttpError.BadRequest('no file uploaded');
   }
+  const prevNote = (await iSecureNoteService.getISecureNote(id)).iSecureNote;
   const result = await iSecureNoteService.updateImage({
     id,
     image: req.file.filename,
   });
   if (result.error) {
+    AuditLogService.createAuditLog({
+      performedBy: req.user.email!,
+      module: MODULES.ISECURE_NOTE,
+      description: 'image update failed',
+      newValue: null,
+      status: 'F',
+      previousValue: JSON.stringify(prevNote),
+    });
     if (result.error === ERRORS.UPDATE_FAILED) {
       throw createHttpError.InternalServerError('update failed');
     } else if (result.error === ERRORS.INVALID_ID) {
@@ -122,5 +167,13 @@ export async function httpUpdateISecureNote(
     }
     throw createHttpError(result.error);
   }
+  AuditLogService.createAuditLog({
+    performedBy: req.user.email!,
+    module: MODULES.ISECURE_NOTE,
+    description: 'image updated',
+    newValue: JSON.stringify({ ...prevNote, image: req.file.filename }),
+    status: 'S',
+    previousValue: JSON.stringify(prevNote),
+  });
   res.status(200).json(result);
 }
